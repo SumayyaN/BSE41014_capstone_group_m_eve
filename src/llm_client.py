@@ -8,7 +8,7 @@ load_dotenv(dotenv_path=env_path)
 
 client = genai.Client(api_key=os.environ["GEMINI_API_KEY"])
 
-PROMPTS_DIR = Path(__file__).parent / "prompts"
+PROMPTS_DIR = Path(__file__).parent.parent / "prompts"
 
 def load_prompt(version: str = "v1.0") -> str:
     """Load system prompt from file."""

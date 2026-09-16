@@ -14,7 +14,7 @@ with st.sidebar:
     st.header("Settings")
     prompt_version = st.selectbox(
         "Prompt Version",
-        ["v1.0"],
+        ["v1.0" , "v1.1"],
         help="Switch prompt versions for comparison"
     )
     st.write(f"Using: `{prompt_version}_baseline.txt`")
