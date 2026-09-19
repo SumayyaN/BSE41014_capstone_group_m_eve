@@ -3,7 +3,6 @@ from llm_client import ask_llm
 
 st.set_page_config(page_title="MAK Student Support (Baseline)")
 st.title("Makerere Freshman Support AI")
-st.caption("Week 2 Baseline — No RAG, No Tools, No Memory")
 
 # Initialize chat history
 if "messages" not in st.session_state:
@@ -14,10 +13,19 @@ with st.sidebar:
     st.header("Settings")
     prompt_version = st.selectbox(
         "Prompt Version",
-        ["v1.0"],
+        ["v1.0", "v1.1", "v1.2"],
         help="Switch prompt versions for comparison"
     )
     st.write(f"Using: `{prompt_version}_baseline.txt`")
+
+# Caption reflects the actually selected version, so it never goes stale
+# again as new prompt versions are added.
+CAPTIONS = {
+    "v1.0": "v1.0 — No RAG, No Tools, No Memory",
+    "v1.1": "v1.1 — No RAG, No Tools, No Memory",
+    "v1.2": "v1.2 — RAG-grounded answers, No Tools, No Memory",
+}
+st.caption(CAPTIONS.get(prompt_version, ""))
 
 # Display chat history
 for msg in st.session_state.messages:

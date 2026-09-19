@@ -1,0 +1,50 @@
+# Virtual environment
+.venv/
+venv/
+env/
+
+# Environment variables 
+.env
+.env.*
+!.env.example
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+
+# VS Code
+.vscode/
+
+# --- RAG Data & Downloaded Files ---
+# Raw documents are reproducible via src/rag/download_sources.py
+data/raw_docs/
+data/processed/
+data/extracted/ 
+data/chunks/
+chunks_with_embeddings.json
+*.pdf
+*.html
+
+# --- Vector Database ---
+# Local vector stores (ChromaDB, FAISS) should not be committed
+*.sqlite3
+*.faiss
+chroma_db/
+vector_store/
+
+# --- Logs & Traces ---
+# Observability traces and logs (Week 7 requirement) are generated, not source
+*.log
+logs/
+evidence/traces/
+
+# --- OS Generated Files ---
+.DS_Store
+Thumbs.db
+
+# --- IDE ---
+.idea/
+*.swp
