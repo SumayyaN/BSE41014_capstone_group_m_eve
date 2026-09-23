@@ -1,0 +1,160 @@
+[
+  {
+    "category": "Answerable",
+    "question": "How do I activate my Makerere webmail account?",
+    "num_chunks": 3,
+    "sources": [
+      "Activating Your Makerere Webmail Account",
+      "Activating Your Makerere Webmail Account",
+      "Freshers' Joining Instructions 2026/2027"
+    ],
+    "similarities": [
+      0.824,
+      0.823,
+      0.775
+    ],
+    "answer": "To activate your Makerere webmail account, make sure you have a valid student number, registration number, and an active alternative email address (such as Gmail or Hotmail). Then follow these steps:\n\n1. Go to **https://sso.mak.ac.ug**.\n2. Select the **\"Student Account\"** option and choose **\"Activate my Webmail Account\"** from the drop-down menu.\n3. Enter your **Student Number** and **Registration Number**, then click **\"Submit Details\"**. (The system will automatically generate your university email address in the format `firstname.surname@students.mak.ac.ug`).\n4. Enter your active **alternative email address** and create a **strong password**. The password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, and one special character (such as `!`, `@`, `#`, `$`, `%`, `*`).\n5. Check your alternative email inbox (or SPAM folder) for a validation code. Enter this code into the field provided and click the **\"Activate\"** button.\n\nOnce completed, a congratulatory message will appear to confirm that your webmail account has been activated.\n\n**Sources:**\n- Activating Your Makerere Webmail Account"
+  },
+  {
+    "category": "Answerable",
+    "question": "How do I connect to the MAKAIR Wi-Fi network?",
+    "num_chunks": 3,
+    "sources": [
+      "New Guidelines For Connecting To MAKAIR",
+      "Eduroam and access to the Metro-Eduroam Network",
+      "Freshers' Joining Instructions 2026/2027"
+    ],
+    "similarities": [
+      0.778,
+      0.71,
+      0.708
+    ],
+    "answer": "To connect to the MAKAIR Wi-Fi network, follow the instructions below based on your device:\n\n**For Mobile Phones:**\n1. Find **MAKAIR** in your available Wi-Fi networks and tap to connect.\n2. Select **\u201cDon\u2019t validate\u201d** from the drop-down menu option.\n3. Under **Identity**, enter your university email address.\n4. Leave **Anonymous Identity** empty/blank.\n5. Under **Password**, enter your webmail password.\n6. Click **Connect**.\n\n*(Note: If your phone fails to connect, you can download the GetEduroam app to assist with the connection).*\n\n**For Computers:**\n1. Find **MAKAIR** under your available Wi-Fi networks.\n2. Enter your university email address as the **username**.\n3. Enter your webmail password as the **Password**.\n4. Click **Connect**.\n\n**Sources:**\n* New Guidelines For Connecting To MAKAIR\n* Freshers' Joining Instructions 2026/2027"
+  },
+  {
+    "category": "Answerable",
+    "question": "How do I create a MUELE account?",
+    "num_chunks": 2,
+    "sources": [
+      "How to Create a MUELE Account",
+      "Student Tutorial on Accessing and Using MUELE"
+    ],
+    "similarities": [
+      0.759,
+      0.713
+    ],
+    "answer": "To create a MUELE account, you need an active Makerere webmail account. MUELE is a self-service system that allows you to create your own account. You can access and download a step-by-step guide titled **\"HOW TO CREATE A MUELE ACCOUNT.pdf\"** from the bottom of the \"How to Create a MUELE Account\" page (under the \"File Upload\" section) or by clicking the provided download link on that page. \n\nIf you need further assistance, you can email `helpme@dicts.mak.ac.ug` or call VOIP 11 111.\n\n**What is missing:** The context mentions that a step-by-step guide exists in a downloadable PDF, but it does not provide the actual step-by-step instructions, specific website link to the MUELE portal, or form fields required to complete the registration process.\n\nSource Title: How to Create a MUELE Account"
+  },
+  {
+    "category": "Answerable",
+    "question": "How do I activate my ACMIS student portal?",
+    "num_chunks": 3,
+    "sources": [
+      "How To Activate Your Mak Student's Portal (ACMIS)",
+      "Makerere University ACMIS Mobile App Guide",
+      "Freshers' Joining Instructions 2026/2027"
+    ],
+    "similarities": [
+      0.782,
+      0.734,
+      0.702
+    ],
+    "answer": "Based on the provided context, here is how you can activate your ACMIS student portal:\n\n**What is known:**\n1. Click the link/button (marked blue) to open the activation page, which will prompt you to enter your student details.\n2. A reset token (number) will be sent to the email address you used when applying as well as to your phone number.\n3. Insert the reset token into the prompt.\n4. Create a password that is at least 8 characters long and includes a capital letter, numbers, and special characters (e.g., `John@2026`).\n5. After creating your password, you can log into your portal using your student number or registration number as your username.\n\n**What is missing:**\nThe provided text is truncated at the beginning of the instructions, so the exact URL to open the activation page and the specific initial steps (steps 1 and 2) are not fully detailed in the context.\n\n**Source Title(s):**\n* Freshers' Joining Instructions 2026/2027\n* How To Activate Your Mak Student's Portal (ACMIS) | Makerere University News"
+  },
+  {
+    "category": "Answerable",
+    "question": "What does a fresher need to bring during joining?",
+    "num_chunks": 0,
+    "sources": [],
+    "similarities": [],
+    "answer": "I don't have that information in my sources. Please contact the support desk."
+  },
+  {
+    "category": "Partially",
+    "question": "How do I connect to Eduroam and what if it fails?",
+    "num_chunks": 0,
+    "sources": [],
+    "similarities": [],
+    "answer": "I don't have that information in my sources. Please contact the support desk."
+  },
+  {
+    "category": "Partially",
+    "question": "How do I reset my webmail password if I forget it?",
+    "num_chunks": 0,
+    "sources": [],
+    "similarities": [],
+    "answer": "I don't have that information in my sources. Please contact the support desk."
+  },
+  {
+    "category": "Partially",
+    "question": "What are the Wi-Fi network names available to students?",
+    "num_chunks": 0,
+    "sources": [],
+    "similarities": [],
+    "answer": "I don't have that information in my sources. Please contact the support desk."
+  },
+  {
+    "category": "Partially",
+    "question": "How do I use the ACMIS mobile app to check my timetable?",
+    "num_chunks": 1,
+    "sources": [
+      "Makerere University ACMIS Mobile App Guide"
+    ],
+    "similarities": [
+      0.733
+    ],
+    "answer": "Based on the provided context, the ACMIS mobile app (also referred to as \"my portal\" or \"student portal\") allows Makerere University students to access portal services on their smartphones, and step-by-step instructions/tutorials are available in an attached PDF document (`Application User GuideV2-compressed.pdf`). \n\nHowever, the specific step-by-step instructions on how to check your timetable using the app are missing from the provided text.\n\nSource: Makerere University ACMIS Mobile App Guide"
+  },
+  {
+    "category": "Partially",
+    "question": "What is the deadline for fresher registration?",
+    "num_chunks": 0,
+    "sources": [],
+    "similarities": [],
+    "answer": "I don't have that information in my sources. Please contact the support desk."
+  },
+  {
+    "category": "Unanswerable",
+    "question": "What is the tuition fee for the astrophysics program?",
+    "num_chunks": 0,
+    "sources": [],
+    "similarities": [],
+    "answer": "I don't have that information in my sources. Please contact the support desk."
+  },
+  {
+    "category": "Unanswerable",
+    "question": "How do I schedule a postgraduate thesis defense?",
+    "num_chunks": 0,
+    "sources": [],
+    "similarities": [],
+    "answer": "I don't have that information in my sources. Please contact the support desk."
+  },
+  {
+    "category": "Unanswerable",
+    "question": "What is the score of the last Makerere basketball match?",
+    "num_chunks": 0,
+    "sources": [],
+    "similarities": [],
+    "answer": "I don't have that information in my sources. Please contact the support desk."
+  },
+  {
+    "category": "Unanswerable",
+    "question": "Can you recommend a good restaurant near campus?",
+    "num_chunks": 0,
+    "sources": [],
+    "similarities": [],
+    "answer": "I don't have that information in my sources. Please contact the support desk."
+  },
+  {
+    "category": "Unanswerable",
+    "question": "What is the Vice Chancellor's phone number?",
+    "num_chunks": 1,
+    "sources": [
+      "Freshers' Joining Instructions 2026/2027"
+    ],
+    "similarities": [
+      0.701
+    ],
+    "answer": "Based on the provided context, the Vice-Chancellor is Professor Barnabas Nawangwe, who is responsible for the academic, administrative, and financial affairs of the University. However, the context does not provide the Vice-Chancellor's phone number.\n\nSource: Freshers' Joining Instructions 2026/2027"
+  }
+]
