@@ -24,7 +24,6 @@ data/raw_docs/
 data/processed/
 data/extracted/ 
 data/chunks/
-data/cases/
 chunks_with_embeddings.json
 *.pdf
 *.html
