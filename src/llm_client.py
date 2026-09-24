@@ -19,11 +19,16 @@ RAG_ENABLED_VERSIONS = {"v1.2"}
 
 
 def load_prompt(version: str = "v1.0") -> str:
-    """Load system prompt from file."""
-    prompt_path = PROMPTS_DIR / f"{version}_baseline.txt"
-    if not prompt_path.exists():
-        raise FileNotFoundError(f"Prompt not found: {prompt_path}")
-    return prompt_path.read_text(encoding="utf-8").strip()
+    """Load system prompt from file.
+
+    v1.0 to v1.2 stay in *_baseline.txt. The tool-enabled prompt is
+    v1.3_tools.txt so those baselines are not rewritten.
+    """
+    for name in (f"{version}_baseline.txt", f"{version}_tools.txt"):
+        prompt_path = PROMPTS_DIR / name
+        if prompt_path.exists():
+            return prompt_path.read_text(encoding="utf-8").strip()
+    raise FileNotFoundError(f"Prompt not found for version {version}")
 
 
 def build_context_block(retrieved_chunks: list[dict]) -> str:
