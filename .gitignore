@@ -26,7 +26,6 @@ data/extracted/
 data/chunks/
 data/cases/
 chunks_with_embeddings.json
-*.pdf
 *.html
 
 # --- Vector Database ---
