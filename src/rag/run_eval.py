@@ -79,7 +79,7 @@ QUESTIONS = [
     ("Unanswerable", "What is the Vice Chancellor's phone number?"),
 ]
 
-OUT_DIR = Path(__file__).resolve().parents[2] / "data" / "eval"
+OUT_DIR = Path(__file__).resolve().parents[2] / "docs" / "evaluation"
 OUT_DIR.mkdir(parents=True, exist_ok=True)
 OUT_PATH = OUT_DIR / "rag_eval_raw.json"
 
