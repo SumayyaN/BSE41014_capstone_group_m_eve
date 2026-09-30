@@ -1,0 +1,43 @@
+{
+  "id": "T1",
+  "scenario": "Grounded answer from the approved documents, then stop.",
+  "session_id": "7283e4a0-37a1-4597-9c22-a2ebc2f53d32",
+  "turns": [
+    {
+      "application_events": [],
+      "student_message": "How do I activate my Makerere webmail account?",
+      "reply": "To activate your Makerere webmail account, you will need a valid student number, a registration number, and an active alternative email address such as Gmail or Hotmail.\n\nAccording to the source document Activating Your Makerere Webmail Account, follow these steps:\n\n1. Go to https://sso.mak.ac.ug\n2. Under the Student Account drop-down menu, select Activate my Webmail Account.\n3. Enter your Student Number and Registration Number, then click Submit Details. The system will automatically generate your university email address in the format firstname.surname@students.mak.ac.ug.\n4. Enter your active alternative email address and create a strong password. The password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, and one special character.\n5. Check your alternative email for\n a validation code (check your SPAM folder if it does not appear in your inbox), enter the code in the field provided, and click Activate.\n\nOnce completed, your webmail account will be activated and a congratulatory message will appear. You can then log in at https://webmail.mak.ac.ug using your university email address and the password you created.",
+      "stop_condition": "S1",
+      "iteration_count": 2,
+      "tools": [
+        {
+          "tool": "retrieve_documents",
+          "arguments": {
+            "query": "activate Makerere webmail account"
+          },
+          "result": {
+            "status": "ok",
+            "retrieved_count": 3,
+            "sources": [
+              {
+                "source_title": "Activating Your Makerere Webmail Account",
+                "source_url": "https://answers.mak.ac.ug/sites/default/files/article-files/ACTIVATING%20YOUR%20MAKERERE%20WEBMAIL%20ACCOUNT.pdf",
+                "similarity_score": 0.8179973860818582
+              },
+              {
+                "source_title": "Activating Your Makerere Webmail Account",
+                "source_url": "https://answers.mak.ac.ug/sites/default/files/article-files/ACTIVATING%20YOUR%20MAKERERE%20WEBMAIL%20ACCOUNT.pdf",
+                "similarity_score": 0.8149240375044524
+              },
+              {
+                "source_title": "Freshers' Joining Instructions 2026/2027",
+                "source_url": "https://news.mak.ac.ug/wp-content/uploads/2026/06/Makerere-Freshers-Joining-Instructions-2026-2027-Jul26-1.pdf",
+                "similarity_score": 0.7658350480599078
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}
