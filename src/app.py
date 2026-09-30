@@ -9,7 +9,7 @@ st.title("Makerere Freshman Support AI")
 # --- Week 5: session state now lives in one SessionState object (Agent Task
 # Contract, Section 4) instead of loose st.session_state fields, so the
 # orchestrator can enforce the Section 5 limits (max 1 draft per session,
-# max 2 tool calls per turn) and log every tool call for evidence/traces.
+# max 3 tool calls per turn) and log every tool call for evidence/traces.
 # "messages" is kept separately - it is the chat *display* list, which is a
 # UI concern; conversation_history inside SessionState is the model-context
 # copy the orchestrator actually reads.

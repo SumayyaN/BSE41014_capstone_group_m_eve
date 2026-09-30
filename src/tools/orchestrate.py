@@ -29,9 +29,8 @@ MODEL = "gemini-3.6-flash"
 # Enforced here, in application code. The model may REQUEST past these
 # limits; the orchestration layer simply will not run the call.
 MAX_ROUNDS = 3                 # model orchestration cycles per student turn
-MAX_TOOL_CALLS_PER_TURN = 2    # total tool calls across the whole turn.
-                                # This also IS the Section 6 / S8 "retry once"
-                                # rule: first attempt + at most one retry = 2.
+MAX_TOOL_CALLS_PER_TURN = 3    # search, a failed case call, and one correction
+MAX_CASE_CALLS_PER_TURN = 2    # first create_support_case plus one correction
 MAX_DRAFTS_PER_SESSION = 1     # create_support_case successes per session
 
 # --- Agent Task Contract, Section 6: Stop conditions -----------------------
@@ -252,6 +251,7 @@ def run_tool_turn(state: SessionState, question: str) -> dict:
 
     turn_trace = []
     calls_this_turn = 0
+    case_calls_this_turn = 0
     text = ""
     hit_round_limit = True
 
@@ -285,9 +285,19 @@ def run_tool_turn(state: SessionState, question: str) -> dict:
                         "message if they still need help."
                     ),
                 }
+            elif name == "create_support_case" and case_calls_this_turn >= MAX_CASE_CALLS_PER_TURN:
+                result = {
+                    "status": "error",
+                    "message": (
+                        "A case field was already corrected once this turn. "
+                        "Ask the student to send the corrected details in a new message."
+                    ),
+                }
             else:
                 result = _run_call(name, arguments, state, question)
                 calls_this_turn += 1
+                if name == "create_support_case":
+                    case_calls_this_turn += 1
 
             # --- Observe ---------------------------------------------------
             state.log_tool_call(name, arguments, result)
