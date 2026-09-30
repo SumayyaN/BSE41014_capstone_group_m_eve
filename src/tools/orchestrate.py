@@ -41,7 +41,7 @@ STOP_CONDITIONS = {
     "S1": "Grounded answer - retrieve_documents returned ok, reply cites a source.",
     "S2": "Case drafted - create_support_case returned created; human hand-off.",
     "S3": "Unsupported / offer draft - retrieve_documents returned no_match.",
-    "S4": "Out-of-scope refusal - non-freshman or non-onboarding request.",
+    "S4": "Out-of-scope refusal - student says they are continuing, returning, or postgraduate.",
     "S5": "Blocked topic refusal - admissions, grading, discipline, fee decision.",
     "S6": "Adversarial input refusal - instruction-override attempt, no tools run.",
     "S7": "Iteration limit - MAX_ROUNDS reached and no other stop applied.",
@@ -109,6 +109,21 @@ _OVERRIDE_RE = re.compile(
 
 def _looks_like_override_attempt(text: str) -> bool:
     return bool(_OVERRIDE_RE.search(text or ""))
+
+
+# S4. Ordinary onboarding questions do not have to say "I am a freshman."
+_NON_FRESHMAN_RE = re.compile(
+    r"\b("
+    r"not a freshman|not a first[- ]year|"
+    r"post[- ]?graduate|"
+    r"continuing student|returning student"
+    r")\b",
+    re.IGNORECASE,
+)
+
+
+def _says_not_a_freshman(text: str) -> bool:
+    return bool(_NON_FRESHMAN_RE.search(text or ""))
 
 
 def _declarations(state: SessionState) -> list:
@@ -239,6 +254,12 @@ def run_tool_turn(state: SessionState, question: str) -> dict:
             "I can't approve, waive, or refund a fee. "
             "I can explain general fee information, or save a question for staff, "
             "if you ask that separately."
+        ))
+    if _says_not_a_freshman(question):
+        return _stop(state, "S4", (
+            "This assistant is for freshman onboarding. "
+            "Please contact the office that handles continuing, returning, "
+            "or postgraduate students."
         ))
     if _looks_like_override_attempt(question):
         return _stop(state, "S6", (
