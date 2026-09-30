@@ -20,7 +20,7 @@ from google.genai import types
 
 from agent.state import SessionState
 from llm_client import client, load_prompt
-from tools.case_store import blocked_topic
+from tools.case_store import blocked_topic, fee_decision
 from tools.handlers import create_support_case, retrieve_documents
 
 MODEL = "gemini-3.6-flash"
@@ -44,8 +44,8 @@ STOP_CONDITIONS = {
     "S4": "Out-of-scope refusal - non-freshman or non-onboarding request.",
     "S5": "Blocked topic refusal - admissions, grading, discipline, fee decision.",
     "S6": "Adversarial input refusal - instruction-override attempt, no tools run.",
-    "S7": "Iteration limit - MAX_ROUNDS reached without S1/S2.",
-    "S8": "Tool failure after one retry - error/validation_error persisted.",
+    "S7": "Iteration limit - MAX_ROUNDS reached and no other stop applied.",
+    "S8": "Tool failure after one retry - the latest result is still an error.",
 }
 
 RETRIEVE_DECLARATION = types.FunctionDeclaration(
@@ -184,24 +184,39 @@ def _run_call(name: str, arguments: dict, state: SessionState, question: str) ->
     }
 
 
-def _infer_stop_condition(trace: list[dict]) -> str | None:
-    """Best-effort label for S1/S2/S3/S8, read off the tool results actually
-    produced this turn. This does NOT attempt to guess S4 (out-of-scope) or
-    S6 (adversarial) when no deterministic check caught them in Sense - those
-    depend on reading the reply's wording, which is exactly the kind of
-    judgment call this project keeps with a person rather than automating.
-    A trace author should assign S4 by hand if the transcript is a refusal
-    but no tool ran and Sense did not already tag S5/S6."""
-    for step in reversed(trace):
-        result = step["result"]
-        if step["tool"] == "create_support_case" and result.get("status") == "created":
-            return "S2"
-        if result.get("status") in ("error", "validation_error"):
+def _reply_cites_returned_source(trace: list[dict], reply_text: str) -> bool:
+    reply = (reply_text or "").lower()
+    for step in trace:
+        if step["tool"] != "retrieve_documents" or step["result"].get("status") != "ok":
+            continue
+        for chunk in step["result"].get("chunks") or []:
+            title = (chunk.get("source_title") or "").strip()
+            if title and title.lower() in reply:
+                return True
+    return False
+
+
+def _infer_stop_condition(trace: list[dict], reply_text: str) -> str | None:
+    """Label S1, S2, S3, or S8 from this turn's tool results and reply.
+    S4 is not assigned here. S5 and S6 are assigned in Sense, before the model runs."""
+    if not trace:
+        return None
+    if any(
+        step["tool"] == "create_support_case" and step["result"].get("status") == "created"
+        for step in trace
+    ):
+        return "S2"
+    last = trace[-1]
+    last_status = last["result"].get("status")
+    if last_status in ("error", "validation_error"):
+        attempts = sum(1 for step in trace if step["tool"] == last["tool"])
+        if attempts >= 2:
             return "S8"
-        if step["tool"] == "retrieve_documents" and result.get("status") == "no_match":
-            return "S3"
-        if step["tool"] == "retrieve_documents" and result.get("status") == "ok":
-            return "S1"
+        return None
+    if last["tool"] == "retrieve_documents" and last_status == "no_match":
+        return "S3"
+    if _reply_cites_returned_source(trace, reply_text):
+        return "S1"
     return None
 
 
@@ -218,6 +233,12 @@ def run_tool_turn(state: SessionState, question: str) -> dict:
         return _stop(state, "S5", (
             "I can't help with admissions, grading, or disciplinary matters. "
             "Please contact the relevant university office."
+        ))
+    if fee_decision(question):
+        return _stop(state, "S5", (
+            "I can't approve, waive, or refund a fee. "
+            "I can explain general fee information, or save a question for staff, "
+            "if you ask that separately."
         ))
     if _looks_like_override_attempt(question):
         return _stop(state, "S6", (
@@ -319,7 +340,11 @@ def run_tool_turn(state: SessionState, question: str) -> dict:
         # Week 4 test evidence flagged exactly this failure mode (a student
         # shown an error message while their case had, in fact, been
         # created), and the orchestration layer must not repeat it.
-        inferred = _infer_stop_condition(turn_trace)
+        inferred = _infer_stop_condition(turn_trace, "")
+        found_passages = any(
+            step["tool"] == "retrieve_documents" and step["result"].get("status") == "ok"
+            for step in turn_trace
+        )
         if inferred == "S2":
             created_step = next(
                 step for step in reversed(turn_trace)
@@ -331,10 +356,22 @@ def run_tool_turn(state: SessionState, question: str) -> dict:
                 f"a staff member will follow up with you."
             )
             stop_condition = "S2"
-        elif inferred == "S1":
+        elif inferred == "S8":
+            text = (
+                "I tried that twice and it still failed. "
+                "Please send the corrected details in a new message."
+            )
+            stop_condition = "S8"
+        elif inferred == "S3":
+            text = (
+                "I couldn't find this in the approved documents. "
+                "I can save a support draft if you use the agreement button."
+            )
+            stop_condition = "S3"
+        elif found_passages:
             text = (
                 "I found relevant information but ran out of turns to phrase "
-                "a full reply - please ask again and I'll answer directly "
+                "a full reply. Please ask again and I'll answer directly "
                 "from what I found."
             )
             stop_condition = "S7"
@@ -345,9 +382,9 @@ def run_tool_turn(state: SessionState, question: str) -> dict:
             )
             stop_condition = "S7"
     elif hit_round_limit:
-        stop_condition = "S7"
+        stop_condition = _infer_stop_condition(turn_trace, text) or "S7"
     else:
-        stop_condition = _infer_stop_condition(turn_trace)
+        stop_condition = _infer_stop_condition(turn_trace, text)
 
     state.record_turn("assistant", text)
     return {
