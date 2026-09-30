@@ -301,14 +301,17 @@ def run_tool_turn(state: SessionState, question: str) -> dict:
         state.iteration_count += 1
 
         # --- Plan / Decide ---------------------------------------------
-        response = client.models.generate_content(
-            model=MODEL,
-            contents=contents,
-            config=types.GenerateContentConfig(
-                system_instruction=system_prompt,
-                tools=[tool],
-            ),
-        )
+        try:
+            response = client.models.generate_content(
+                model=MODEL,
+                contents=contents,
+                config=types.GenerateContentConfig(
+                    system_instruction=system_prompt,
+                    tools=[tool],
+                ),
+            )
+        except Exception as exc:
+            return _model_failure(state, turn_trace, exc)
         calls, text = _calls_and_text(response)
         if not calls:
             hit_round_limit = False
@@ -411,6 +414,35 @@ def run_tool_turn(state: SessionState, question: str) -> dict:
     return {
         "text": text,
         "trace": turn_trace,
+        "stop_condition": stop_condition,
+        "iteration_count": state.iteration_count,
+    }
+
+
+def _model_failure(state: SessionState, trace: list[dict], exc: Exception) -> dict:
+    """The model call failed after the student message was stored. Record an
+    assistant turn so the next message is not a second user turn in a row.
+    If this turn already saved a draft, say so."""
+    case_id = next(
+        (
+            step["result"].get("case_id")
+            for step in reversed(trace)
+            if step["tool"] == "create_support_case" and step["result"].get("status") == "created"
+        ),
+        None,
+    )
+    text = f"Error: {exc}"
+    stop_condition = None
+    if case_id:
+        text += (
+            f" A support draft was already saved (case {case_id}). "
+            "A staff member will follow up on it."
+        )
+        stop_condition = "S2"
+    state.record_turn("assistant", text)
+    return {
+        "text": text,
+        "trace": trace,
         "stop_condition": stop_condition,
         "iteration_count": state.iteration_count,
     }
