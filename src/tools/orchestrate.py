@@ -20,6 +20,7 @@ from google.genai import types
 
 from agent.state import SessionState
 from llm_client import client, load_prompt
+from rag.memory import recall_case
 from tools.case_store import blocked_topic, fee_decision
 from tools.handlers import create_support_case, retrieve_documents
 
@@ -124,6 +125,80 @@ _NON_FRESHMAN_RE = re.compile(
 
 def _says_not_a_freshman(text: str) -> bool:
     return bool(_NON_FRESHMAN_RE.search(text or ""))
+
+
+# --- Week 6: prior-case memory intent --------------------------------------
+# When the student asks about a prior case ("what happened to my case?"),
+# answer deterministically from persistent memory. No model call, no tool
+# call - memory lookups should be cheap, fast, and identical every time.
+_PRIOR_CASE_RE = re.compile(
+    r"\b("
+    r"my (case|ticket|draft|request)|"
+    r"the (case|ticket|draft) i|"
+    r"previous case|last case|"
+    r"what happened to (my|the) (case|ticket|draft|request)|"
+    r"status of (my|the) (case|ticket|draft|request)|"
+    r"case (id|number) i"
+    r")\b",
+    re.IGNORECASE,
+)
+
+
+def _is_prior_case_question(text: str) -> bool:
+    return bool(_PRIOR_CASE_RE.search(text or ""))
+
+
+def _prior_case_reply(question: str, state: SessionState) -> str | None:
+    """If the student is asking about a prior case, return a reply from
+    persistent memory. Return None otherwise so normal orchestration runs.
+
+    This is the Week 6 persistent-memory read path. It never calls the
+    model - the answer is fully determined by what we previously stored
+    via case_store.create_draft -> rag.memory.remember_case.
+    """
+    if not _is_prior_case_question(question):
+        return None
+
+    # The student_identifier may be in the current turn, or in an earlier
+    # turn of the same session. Scan the conversation for the most recent
+    # registration number we have seen, matching the case_store regex shape.
+    identifier = _latest_identifier_in_session(state)
+    if not identifier:
+        return (
+            "I can look up a prior case if you give me the student "
+            "registration number you used when the case was filed. "
+            "It looks like 22/U/12345 or 22/U/12345/EVE."
+        )
+
+    prior = recall_case(identifier)
+    if not prior:
+        return (
+            f"I don't have a prior case on record for {identifier}. "
+            "If it was filed more than 90 days ago, it may have been "
+            "auto-removed. If you believe this is an error, please "
+            "contact the support desk."
+        )
+
+    topic = prior["last_case_topic"].replace("_", " ")
+    return (
+        f"Your most recent case is {prior['last_case_id']} about {topic}. "
+        f"It is currently {prior['last_case_status']} — a staff member "
+        f"will review it. You do not need to resubmit anything."
+    )
+
+
+_IDENTIFIER_RE = re.compile(r"\b\d{2}/[UX]/\d{4,5}(/(PS|EVE))?\b", re.IGNORECASE)
+
+
+def _latest_identifier_in_session(state: SessionState) -> str | None:
+    """Return the most recent registration number seen in this session's
+    conversation, or None. Scans backwards so a student who corrected
+    their number gets the corrected one."""
+    for turn in reversed(state.conversation_history):
+        match = _IDENTIFIER_RE.search(turn.get("content", "") or "")
+        if match:
+            return match.group(0).upper()
+    return None
 
 
 def _declarations(state: SessionState) -> list:
@@ -267,6 +342,11 @@ def run_tool_turn(state: SessionState, question: str) -> dict:
             "change how I'm allowed to behave. How can I help with your "
             "onboarding question?"
         ))
+
+    # --- Week 6: prior-case memory read (deterministic, no model call) ---
+    prior_reply = _prior_case_reply(question, state)
+    if prior_reply is not None:
+        return _stop(state, "S9", prior_reply)
 
     system_prompt = load_prompt("v1.3")
     if state.draft_already_created():

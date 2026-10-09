@@ -5,6 +5,8 @@ import re
 from datetime import datetime, timezone
 from pathlib import Path
 
+from rag.memory import remember_case
+
 STORE_PATH = Path(__file__).resolve().parents[2] / "data" / "cases" / "drafts.json"
 
 REGISTRATION_RE = re.compile(r"^\d{2}/[UX]/\d{4,5}(/(PS|EVE))?$")
@@ -132,6 +134,12 @@ def create_draft(arguments: dict, session_id: str) -> dict:
         "created_at": created_at,
     })
     _save(records)
+
+    # Week 6: persist the most recent case for this student so future
+    # sessions can answer "what happened to my case?" without asking the
+    # student to repeat the case_id.
+    remember_case(student_id=identifier, case_id=case_id, topic=category)
+
     return {
         "status": "created",
         "case_id": case_id,
