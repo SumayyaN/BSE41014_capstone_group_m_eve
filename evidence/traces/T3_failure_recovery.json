@@ -1,0 +1,69 @@
+{
+  "id": "T3",
+  "scenario": "A registration number is rejected, then one corrected attempt is made.",
+  "session_id": "f8b251b0-c9f4-4967-88f0-fd3669250a7f",
+  "turns": [
+    {
+      "application_events": [
+        "Student had already used the agreement control."
+      ],
+      "student_message": "My registration number is 23/A/93939. Wi-Fi will not connect. Please create a support draft in category it_webmail_wifi.",
+      "reply": "I do not have confirmed information about Wi-Fi connection troubleshooting in the approved university documents.\n\nRegarding your support draft, I was unable to create it because 23/A/93939 is not a valid registration number format. Registration numbers must start with two digits, followed by U or X, four or five digits, and optionally /PS or /EVE (such as 23/U/93939). Please provide a valid registration number so I can assist you with creating the support draft.",
+      "stop_condition": null,
+      "iteration_count": 3,
+      "tools": [
+        {
+          "tool": "retrieve_documents",
+          "arguments": {
+            "query": "Wi-Fi connection issues campus wifi"
+          },
+          "result": {
+            "status": "no_match",
+            "retrieved_count": 0
+          }
+        },
+        {
+          "tool": "create_support_case",
+          "arguments": {
+            "student_identifier": "23/A/93939",
+            "issue_summary": "Wi-Fi will not connect",
+            "category": "it_webmail_wifi"
+          },
+          "result": {
+            "status": "validation_error",
+            "validation_errors": [
+              {
+                "field": "student_identifier",
+                "message": "Use two digits, U or X, four or five digits, and optionally /PS or /EVE."
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "application_events": [],
+      "student_message": "The correct registration number is 23/U/22615. Please create the support draft with that number.",
+      "reply": "Your support draft has been successfully created with case ID CASE-2026-000001 for registration number 23/U/22615 under the IT, Webmail, and Wi-Fi category. \n\nPlease note that saving this draft does not automatically contact an office or submit an official request, and the draft cannot be closed or canceled through this chat.",
+      "stop_condition": "S2",
+      "iteration_count": 2,
+      "tools": [
+        {
+          "tool": "create_support_case",
+          "arguments": {
+            "student_identifier": "23/U/22615",
+            "category": "it_webmail_wifi",
+            "issue_summary": "Campus Wi-Fi connection issue"
+          },
+          "result": {
+            "status": "created",
+            "case_id": "CASE-2026-000001",
+            "session_id": "f8b251b0-c9f4-4967-88f0-fd3669250a7f",
+            "routed_queue": "ict_helpdesk",
+            "created_at": "2026-09-30T22:34:08.689501+00:00"
+          }
+        }
+      ]
+    }
+  ]
+}

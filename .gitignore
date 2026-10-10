@@ -25,6 +25,7 @@ data/processed/
 data/extracted/ 
 data/chunks/
 data/cases/
+data/memory/
 chunks_with_embeddings.json
 *.html
 
@@ -39,7 +40,10 @@ vector_store/
 # Observability traces and logs (Week 7 requirement) are generated, not source
 *.log
 logs/
-evidence/traces/
+evidence/traces/*
+!evidence/traces/T1_grounded_answer.json
+!evidence/traces/T2_case_draft.json
+!evidence/traces/T3_failure_recovery.json
 
 # --- OS Generated Files ---
 .DS_Store

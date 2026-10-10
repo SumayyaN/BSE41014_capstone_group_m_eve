@@ -132,6 +132,7 @@ def create_draft(arguments: dict, session_id: str) -> dict:
         "created_at": created_at,
     })
     _save(records)
+
     return {
         "status": "created",
         "case_id": case_id,
@@ -139,3 +140,18 @@ def create_draft(arguments: dict, session_id: str) -> dict:
         "routed_queue": queue,
         "created_at": created_at,
     }
+
+
+def get_case_history(student_identifier: str) -> list[dict]:
+    """Read drafts for one registration number. Exact match only.
+
+    Returns [] when the number is missing, malformed, or not on file.
+    Does not create a second store and does not delete old drafts.
+    """
+    identifier = str(student_identifier or "").strip().upper()
+    if not identifier or not REGISTRATION_RE.match(identifier):
+        return []
+    return [
+        record for record in _load()
+        if str(record.get("student_identifier") or "").upper() == identifier
+    ]
