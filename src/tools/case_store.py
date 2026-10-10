@@ -5,8 +5,6 @@ import re
 from datetime import datetime, timezone
 from pathlib import Path
 
-from rag.memory import remember_case
-
 STORE_PATH = Path(__file__).resolve().parents[2] / "data" / "cases" / "drafts.json"
 
 REGISTRATION_RE = re.compile(r"^\d{2}/[UX]/\d{4,5}(/(PS|EVE))?$")
@@ -135,11 +133,6 @@ def create_draft(arguments: dict, session_id: str) -> dict:
     })
     _save(records)
 
-    # Week 6: persist the most recent case for this student so future
-    # sessions can answer "what happened to my case?" without asking the
-    # student to repeat the case_id.
-    remember_case(student_id=identifier, case_id=case_id, topic=category)
-
     return {
         "status": "created",
         "case_id": case_id,
@@ -147,3 +140,18 @@ def create_draft(arguments: dict, session_id: str) -> dict:
         "routed_queue": queue,
         "created_at": created_at,
     }
+
+
+def get_case_history(student_identifier: str) -> list[dict]:
+    """Read drafts for one registration number. Exact match only.
+
+    Returns [] when the number is missing, malformed, or not on file.
+    Does not create a second store and does not delete old drafts.
+    """
+    identifier = str(student_identifier or "").strip().upper()
+    if not identifier or not REGISTRATION_RE.match(identifier):
+        return []
+    return [
+        record for record in _load()
+        if str(record.get("student_identifier") or "").upper() == identifier
+    ]

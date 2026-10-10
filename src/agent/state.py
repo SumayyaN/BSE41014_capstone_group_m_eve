@@ -82,13 +82,3 @@ class SessionState:
         per-turn iteration count resets - tool_call_log, conversation
         history, and the draft/agreement flags persist for the session."""
         self.iteration_count = 0
-
-    def lookup_prior_case(self, student_identifier: str) -> dict | None:
-        """Week 6: check persistent memory for this student's last case.
-
-        Called deterministically by the orchestrator when the student asks
-        about a prior case. Not sent to the model. Returns None if there is
-        no memory for this student.
-        """
-        from rag.memory import recall_case
-        return recall_case(student_identifier)

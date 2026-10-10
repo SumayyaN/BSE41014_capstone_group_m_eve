@@ -20,8 +20,7 @@ from google.genai import types
 
 from agent.state import SessionState
 from llm_client import client, load_prompt
-from rag.memory import recall_case
-from tools.case_store import blocked_topic, fee_decision
+from tools.case_store import blocked_topic, fee_decision, get_case_history
 from tools.handlers import create_support_case, retrieve_documents
 
 MODEL = "gemini-3.6-flash"
@@ -127,78 +126,61 @@ def _says_not_a_freshman(text: str) -> bool:
     return bool(_NON_FRESHMAN_RE.search(text or ""))
 
 
-# --- Week 6: prior-case memory intent --------------------------------------
-# When the student asks about a prior case ("what happened to my case?"),
-# answer deterministically from persistent memory. No model call, no tool
-# call - memory lookups should be cheap, fast, and identical every time.
+# --- Week 6: case history recall -------------------------------------------
+# The prior-case phrase must be in the current message. The registration
+# number may be in that message or an earlier message from the student.
+# The lookup reads drafts.json. It adds a note to the prompt and the turn
+# continues. Assistant text is not searched, so an example number in a
+# reply cannot be treated as the student's number.
 _PRIOR_CASE_RE = re.compile(
-    r"\b("
-    r"my (case|ticket|draft|request)|"
-    r"the (case|ticket|draft) i|"
-    r"previous case|last case|"
-    r"what happened to (my|the) (case|ticket|draft|request)|"
-    r"status of (my|the) (case|ticket|draft|request)|"
-    r"case (id|number) i"
-    r")\b",
+    r"\b(already reported|my case|what happened to|still waiting|follow[- ]up on)\b",
     re.IGNORECASE,
 )
-
-
-def _is_prior_case_question(text: str) -> bool:
-    return bool(_PRIOR_CASE_RE.search(text or ""))
-
-
-def _prior_case_reply(question: str, state: SessionState) -> str | None:
-    """If the student is asking about a prior case, return a reply from
-    persistent memory. Return None otherwise so normal orchestration runs.
-
-    This is the Week 6 persistent-memory read path. It never calls the
-    model - the answer is fully determined by what we previously stored
-    via case_store.create_draft -> rag.memory.remember_case.
-    """
-    if not _is_prior_case_question(question):
-        return None
-
-    # The student_identifier may be in the current turn, or in an earlier
-    # turn of the same session. Scan the conversation for the most recent
-    # registration number we have seen, matching the case_store regex shape.
-    identifier = _latest_identifier_in_session(state)
-    if not identifier:
-        return (
-            "I can look up a prior case if you give me the student "
-            "registration number you used when the case was filed. "
-            "It looks like 22/U/12345 or 22/U/12345/EVE."
-        )
-
-    prior = recall_case(identifier)
-    if not prior:
-        return (
-            f"I don't have a prior case on record for {identifier}. "
-            "If it was filed more than 90 days ago, it may have been "
-            "auto-removed. If you believe this is an error, please "
-            "contact the support desk."
-        )
-
-    topic = prior["last_case_topic"].replace("_", " ")
-    return (
-        f"Your most recent case is {prior['last_case_id']} about {topic}. "
-        f"It is currently {prior['last_case_status']} — a staff member "
-        f"will review it. You do not need to resubmit anything."
-    )
-
-
 _IDENTIFIER_RE = re.compile(r"\b\d{2}/[UX]/\d{4,5}(/(PS|EVE))?\b", re.IGNORECASE)
 
 
-def _latest_identifier_in_session(state: SessionState) -> str | None:
-    """Return the most recent registration number seen in this session's
-    conversation, or None. Scans backwards so a student who corrected
-    their number gets the corrected one."""
+def _latest_student_identifier(state: SessionState) -> str | None:
+    """Most recent registration number in the student's own messages."""
     for turn in reversed(state.conversation_history):
-        match = _IDENTIFIER_RE.search(turn.get("content", "") or "")
+        if turn.get("role") != "user":
+            continue
+        match = _IDENTIFIER_RE.search(turn.get("content") or "")
         if match:
             return match.group(0).upper()
     return None
+
+
+def _case_history_note(question: str, state: SessionState) -> str:
+    """Prompt note for Case History Recall. Empty when this turn is not a recall."""
+    if not _PRIOR_CASE_RE.search(question or ""):
+        return ""
+    identifier = _latest_student_identifier(state)
+    if not identifier:
+        return (
+            "Session note: the student is asking about an earlier case and has "
+            "not given a registration number in their own messages. Ask for the "
+            "number they used when the case was filed. Do not invent an example number."
+        )
+    history = get_case_history(identifier)
+    if not history:
+        return (
+            f"Session note: there is no case on file for {identifier}. "
+            "Say that. Do not suggest the case was deleted because of its age."
+        )
+    lines = [
+        f"Session note: this student ({identifier}) has {len(history)} existing case(s) on file."
+    ]
+    for record in history:
+        lines.append(
+            f"- {record.get('case_id')}, queue {record.get('queue_label')}, "
+            f"opened {record.get('created_at')}. Issue: {record.get('issue_summary')}"
+        )
+    lines.append(
+        "If this message is about the same issue, say that case already exists. "
+        "Do not assign the case a live status, and do not tell the student they need not resubmit. "
+        "The application refuses a second draft for this registration number."
+    )
+    return "\n".join(lines)
 
 
 def _declarations(state: SessionState) -> list:
@@ -261,6 +243,19 @@ def _run_call(name: str, arguments: dict, state: SessionState, question: str) ->
                 "message": (
                     "The case tool is not available until the student agrees, "
                     "and it is refused for admissions, grading, and discipline."
+                ),
+            }
+        existing = get_case_history(str(arguments.get("student_identifier") or ""))
+        if existing:
+            listed = "; ".join(
+                f"{record.get('case_id')} ({record.get('issue_summary')})"
+                for record in existing
+            )
+            return {
+                "status": "error",
+                "message": (
+                    "A support draft is already on file for this registration "
+                    f"number: {listed}. A second draft was not saved."
                 ),
             }
         result = create_support_case(arguments, state.session_id)
@@ -343,12 +338,10 @@ def run_tool_turn(state: SessionState, question: str) -> dict:
             "onboarding question?"
         ))
 
-    # --- Week 6: prior-case memory read (deterministic, no model call) ---
-    prior_reply = _prior_case_reply(question, state)
-    if prior_reply is not None:
-        return _stop(state, "S9", prior_reply)
-
     system_prompt = load_prompt("v1.3")
+    history_note = _case_history_note(question, state)
+    if history_note:
+        system_prompt += "\n\n" + history_note
     if state.draft_already_created():
         # v1.3_tools.txt only tells the model what to say when the student
         # has not yet agreed ("ask the student to use the agreement
