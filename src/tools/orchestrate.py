@@ -20,7 +20,7 @@ from google.genai import types
 
 from agent.state import SessionState
 from llm_client import client, load_prompt
-from tools.case_store import blocked_topic, fee_decision
+from tools.case_store import blocked_topic, fee_decision, get_case_history
 from tools.handlers import create_support_case, retrieve_documents
 
 MODEL = "gemini-3.6-flash"
@@ -126,6 +126,63 @@ def _says_not_a_freshman(text: str) -> bool:
     return bool(_NON_FRESHMAN_RE.search(text or ""))
 
 
+# --- Week 6: case history recall -------------------------------------------
+# The prior-case phrase must be in the current message. The registration
+# number may be in that message or an earlier message from the student.
+# The lookup reads drafts.json. It adds a note to the prompt and the turn
+# continues. Assistant text is not searched, so an example number in a
+# reply cannot be treated as the student's number.
+_PRIOR_CASE_RE = re.compile(
+    r"\b(already reported|my case|what happened to|still waiting|follow[- ]up on)\b",
+    re.IGNORECASE,
+)
+_IDENTIFIER_RE = re.compile(r"\b\d{2}/[UX]/\d{4,5}(/(PS|EVE))?\b", re.IGNORECASE)
+
+
+def _latest_student_identifier(state: SessionState) -> str | None:
+    """Most recent registration number in the student's own messages."""
+    for turn in reversed(state.conversation_history):
+        if turn.get("role") != "user":
+            continue
+        match = _IDENTIFIER_RE.search(turn.get("content") or "")
+        if match:
+            return match.group(0).upper()
+    return None
+
+
+def _case_history_note(question: str, state: SessionState) -> str:
+    """Prompt note for Case History Recall. Empty when this turn is not a recall."""
+    if not _PRIOR_CASE_RE.search(question or ""):
+        return ""
+    identifier = _latest_student_identifier(state)
+    if not identifier:
+        return (
+            "Session note: the student is asking about an earlier case and has "
+            "not given a registration number in their own messages. Ask for the "
+            "number they used when the case was filed. Do not invent an example number."
+        )
+    history = get_case_history(identifier)
+    if not history:
+        return (
+            f"Session note: there is no case on file for {identifier}. "
+            "Say that. Do not suggest the case was deleted because of its age."
+        )
+    lines = [
+        f"Session note: this student ({identifier}) has {len(history)} existing case(s) on file."
+    ]
+    for record in history:
+        lines.append(
+            f"- {record.get('case_id')}, queue {record.get('queue_label')}, "
+            f"opened {record.get('created_at')}. Issue: {record.get('issue_summary')}"
+        )
+    lines.append(
+        "If this message is about the same issue, say that case already exists. "
+        "Do not assign the case a live status, and do not tell the student they need not resubmit. "
+        "The application refuses a second draft for this registration number."
+    )
+    return "\n".join(lines)
+
+
 def _declarations(state: SessionState) -> list:
     """The allow-list the model sees this turn. create_support_case is
     withheld entirely - not just refused at call time - once agreement has
@@ -186,6 +243,19 @@ def _run_call(name: str, arguments: dict, state: SessionState, question: str) ->
                 "message": (
                     "The case tool is not available until the student agrees, "
                     "and it is refused for admissions, grading, and discipline."
+                ),
+            }
+        existing = get_case_history(str(arguments.get("student_identifier") or ""))
+        if existing:
+            listed = "; ".join(
+                f"{record.get('case_id')} ({record.get('issue_summary')})"
+                for record in existing
+            )
+            return {
+                "status": "error",
+                "message": (
+                    "A support draft is already on file for this registration "
+                    f"number: {listed}. A second draft was not saved."
                 ),
             }
         result = create_support_case(arguments, state.session_id)
@@ -269,6 +339,9 @@ def run_tool_turn(state: SessionState, question: str) -> dict:
         ))
 
     system_prompt = load_prompt("v1.3")
+    history_note = _case_history_note(question, state)
+    if history_note:
+        system_prompt += "\n\n" + history_note
     if state.draft_already_created():
         # v1.3_tools.txt only tells the model what to say when the student
         # has not yet agreed ("ask the student to use the agreement

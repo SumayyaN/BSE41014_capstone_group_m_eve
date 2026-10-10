@@ -25,6 +25,7 @@ data/processed/
 data/extracted/ 
 data/chunks/
 data/cases/
+data/memory/
 chunks_with_embeddings.json
 *.html
 
