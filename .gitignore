@@ -44,6 +44,10 @@ evidence/traces/*
 !evidence/traces/T1_grounded_answer.json
 !evidence/traces/T2_case_draft.json
 !evidence/traces/T3_failure_recovery.json
+!evidence/traces/O1_blocked_topic.json
+!evidence/traces/O2_adversarial_refusal.json
+!evidence/traces/O3_grounded_answer.json
+!evidence/traces/O4_model_unavailable.json
 
 # --- OS Generated Files ---
 .DS_Store

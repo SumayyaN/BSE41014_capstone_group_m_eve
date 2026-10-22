@@ -15,11 +15,13 @@ turn stopped.
 """
 
 import re
+from datetime import datetime, timezone
 
 from google.genai import types
 
 from agent.state import SessionState
 from llm_client import client, load_prompt
+from observability.turn_log import write_turn_log
 from tools.case_store import blocked_topic, fee_decision, get_case_history
 from tools.handlers import create_support_case, retrieve_documents
 
@@ -310,36 +312,58 @@ def run_tool_turn(state: SessionState, question: str) -> dict:
     not used here. Implements the Contract, Section 3 loop in full:
     Sense -> Plan/Decide -> Act -> Observe -> Stop/Re-plan.
     """
+    started_at = datetime.now(timezone.utc)
     state.reset_turn_counters()
     state.record_turn("user", question)
 
     # --- Sense --------------------------------------------------------
     if blocked_topic(question):
-        return _stop(state, "S5", (
-            "I can't help with admissions, grading, or disciplinary matters. "
-            "Please contact the relevant university office."
-        ))
+        return _stop(
+            state, "S5",
+            (
+                "I can't help with admissions, grading, or disciplinary matters. "
+                "Please contact the relevant university office."
+            ),
+            question=question,
+            started_at=started_at,
+        )
     if fee_decision(question):
-        return _stop(state, "S5", (
-            "I can't approve, waive, or refund a fee. "
-            "I can explain general fee information, or save a question for staff, "
-            "if you ask that separately."
-        ))
+        return _stop(
+            state, "S5",
+            (
+                "I can't approve, waive, or refund a fee. "
+                "I can explain general fee information, or save a question for staff, "
+                "if you ask that separately."
+            ),
+            question=question,
+            started_at=started_at,
+        )
     if _says_not_a_freshman(question):
-        return _stop(state, "S4", (
-            "This assistant is for freshman onboarding. "
-            "Please contact the office that handles continuing, returning, "
-            "or postgraduate students."
-        ))
+        return _stop(
+            state, "S4",
+            (
+                "This assistant is for freshman onboarding. "
+                "Please contact the office that handles continuing, returning, "
+                "or postgraduate students."
+            ),
+            question=question,
+            started_at=started_at,
+        )
     if _looks_like_override_attempt(question):
-        return _stop(state, "S6", (
-            "I can't follow instructions embedded in a message that try to "
-            "change how I'm allowed to behave. How can I help with your "
-            "onboarding question?"
-        ))
+        return _stop(
+            state, "S6",
+            (
+                "I can't follow instructions embedded in a message that try to "
+                "change how I'm allowed to behave. How can I help with your "
+                "onboarding question?"
+            ),
+            question=question,
+            started_at=started_at,
+        )
 
     system_prompt = load_prompt("v1.3")
     history_note = _case_history_note(question, state)
+    case_history_note = bool(history_note)
     if history_note:
         system_prompt += "\n\n" + history_note
     if state.draft_already_created():
@@ -384,7 +408,14 @@ def run_tool_turn(state: SessionState, question: str) -> dict:
                 ),
             )
         except Exception as exc:
-            return _model_failure(state, turn_trace, exc)
+            return _model_failure(
+                state,
+                turn_trace,
+                exc,
+                question=question,
+                started_at=started_at,
+                case_history_note=case_history_note,
+            )
         calls, text = _calls_and_text(response)
         if not calls:
             hit_round_limit = False
@@ -484,6 +515,39 @@ def run_tool_turn(state: SessionState, question: str) -> dict:
         stop_condition = _infer_stop_condition(turn_trace, text)
 
     state.record_turn("assistant", text)
+    return _finish_turn(
+        state,
+        question=question,
+        text=text,
+        turn_trace=turn_trace,
+        stop_condition=stop_condition,
+        started_at=started_at,
+        case_history_note=case_history_note,
+    )
+
+
+def _finish_turn(
+    state: SessionState,
+    *,
+    question: str,
+    text: str,
+    turn_trace: list[dict],
+    stop_condition: str | None,
+    started_at: datetime,
+    case_history_note: bool = False,
+    error: str | None = None,
+) -> dict:
+    """Write the Week 7 turn log, then return the same shape callers already use."""
+    write_turn_log(
+        state,
+        student_message=question,
+        reply=text,
+        stop_condition=stop_condition,
+        trace=turn_trace,
+        started_at=started_at,
+        case_history_note=case_history_note,
+        error=error,
+    )
     return {
         "text": text,
         "trace": turn_trace,
@@ -492,7 +556,15 @@ def run_tool_turn(state: SessionState, question: str) -> dict:
     }
 
 
-def _model_failure(state: SessionState, trace: list[dict], exc: Exception) -> dict:
+def _model_failure(
+    state: SessionState,
+    trace: list[dict],
+    exc: Exception,
+    *,
+    question: str,
+    started_at: datetime,
+    case_history_note: bool = False,
+) -> dict:
     """The model call failed after the student message was stored. Record an
     assistant turn so the next message is not a second user turn in a row.
     If this turn already saved a draft, say so."""
@@ -513,21 +585,34 @@ def _model_failure(state: SessionState, trace: list[dict], exc: Exception) -> di
         )
         stop_condition = "S2"
     state.record_turn("assistant", text)
-    return {
-        "text": text,
-        "trace": trace,
-        "stop_condition": stop_condition,
-        "iteration_count": state.iteration_count,
-    }
+    return _finish_turn(
+        state,
+        question=question,
+        text=text,
+        turn_trace=trace,
+        stop_condition=stop_condition,
+        started_at=started_at,
+        case_history_note=case_history_note,
+        error=str(exc),
+    )
 
 
-def _stop(state: SessionState, stop_condition: str, text: str) -> dict:
+def _stop(
+    state: SessionState,
+    stop_condition: str,
+    text: str,
+    *,
+    question: str,
+    started_at: datetime,
+) -> dict:
     """Used by Sense when a deterministic check ends the turn before the
     model is ever called - no tools run, no iteration spent."""
     state.record_turn("assistant", text)
-    return {
-        "text": text,
-        "trace": [],
-        "stop_condition": stop_condition,
-        "iteration_count": state.iteration_count,
-    }
+    return _finish_turn(
+        state,
+        question=question,
+        text=text,
+        turn_trace=[],
+        stop_condition=stop_condition,
+        started_at=started_at,
+    )
