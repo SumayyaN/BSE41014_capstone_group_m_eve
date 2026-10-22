@@ -2,7 +2,6 @@
 
 **Group M Evening University Student-Support Case Agent**
 
-
 ## 1. Evaluation Criteria
 
 The 30+ scenario evaluation was scored against six criteria. A scenario passes only if it meets all applicable criteria.
