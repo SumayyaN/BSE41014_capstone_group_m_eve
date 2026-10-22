@@ -1,0 +1,98 @@
+{
+  "A04": {
+    "result": "PASS",
+    "evidence": "status=created; stored session_id=real-session",
+    "tools": "create_support_case",
+    "stop": null
+  },
+  "A06": {
+    "result": "PASS",
+    "evidence": "status=error: That action is not registered. Resolve, close, and reassign are not available.",
+    "tools": "close_case (unregistered)",
+    "stop": null
+  },
+  "C04": {
+    "result": "PASS",
+    "evidence": "status=validation_error; rows written=0",
+    "tools": "create_support_case",
+    "stop": null
+  },
+  "C06": {
+    "result": "PASS",
+    "evidence": "status=error; rows written=0",
+    "tools": "create_support_case",
+    "stop": null
+  },
+  "C07": {
+    "result": "FAIL",
+    "evidence": "status=created; rows written=1; routed_queue=general_onboarding. MCP spec section 3 says fee waiver/refund language must be refused in any category.",
+    "tools": "create_support_case",
+    "stop": null
+  },
+  "C08": {
+    "result": "FAIL",
+    "evidence": "status=created; rows written=1. Week 4 recommended rejecting placeholder summaries.",
+    "tools": "create_support_case",
+    "stop": null
+  },
+  "L03": {
+    "result": "PASS",
+    "evidence": "statuses=['ok', 'ok', 'ok', 'error']",
+    "tools": "retrieve_documents x4 requested",
+    "stop": "S8"
+  },
+  "L04": {
+    "result": "PASS",
+    "evidence": "case-call statuses=['validation_error', 'validation_error', 'error']; rows written=0",
+    "tools": "create_support_case x3 requested",
+    "stop": "S8"
+  },
+  "L05": {
+    "result": "PASS",
+    "evidence": "stop=S7; iteration_count=3",
+    "tools": "retrieve_documents x3",
+    "stop": "S7"
+  },
+  "L06": {
+    "result": "PASS",
+    "evidence": "declarations offered: not agreed=1, agreed=2, agreed with draft=1",
+    "tools": "none",
+    "stop": null
+  },
+  "R01": {
+    "result": "PASS",
+    "evidence": "status=error; message=query is required; chunks=0",
+    "tools": "retrieve_documents",
+    "stop": null
+  },
+  "R02": {
+    "result": "PASS",
+    "evidence": "status=error; message=The document index is unavailable.; chunks=0",
+    "tools": "retrieve_documents",
+    "stop": null
+  },
+  "R03": {
+    "result": "PASS",
+    "evidence": "status=no_match; chunks=0",
+    "tools": "retrieve_documents",
+    "stop": null
+  },
+  "R04": {
+    "result": "FAIL",
+    "evidence": "student-facing text: 'Error: 503 UNAVAILABLE: model overloaded'. The raw exception text is shown to the student.",
+    "tools": "none",
+    "stop": null
+  },
+  "R05": {
+    "result": "PASS",
+    "evidence": "stop=S2; reply: Error: 503 UNAVAILABLE A support draft was already saved (case CASE-2026-000001). A staff member will follow up on it.; rows=1",
+    "tools": "create_support_case",
+    "stop": "S2"
+  },
+  "R06": {
+    "result": "PASS",
+    "evidence": "second attempt statuses=['error']; rows=1; active_case_id=CASE-2026-000001",
+    "tools": "create_support_case",
+    "stop": null
+  }
+}
