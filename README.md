@@ -1,77 +1,194 @@
-# RAG Pipeline — Setup & Run Order
+# Makerere University Freshman Support Agent
+**BSE4104 AI Agentic Systems — Capstone Project**
+Group M (Evening) | Makerere University
 
-This folder builds the retrieval-augmented generation (RAG) pipeline that
-grounds the agent's answers in real Makerere University documents (see
-`docs/requirements/corpus-source-register.md` for the full source list).
+---
 
-The raw downloaded documents, extracted text, and embeddings are **not**
-committed to this repository (they're regenerable and/or large — see
-`.gitignore`). After cloning the repo, you must run the pipeline once
-locally before the app will give grounded (v1.2) answers.
+## What This Is
+
+A RAG-powered AI support agent that helps Makerere University freshmen with onboarding questions — webmail setup, campus Wi-Fi, ACMIS portal activation, and registration. It grounds every answer in real university documents and can save a support draft for staff follow-up.
+
+Four prompt versions are included for comparison:
+
+| Version | Description |
+|---------|-------------|
+| v1.0 | Baseline — no RAG, no tools, no memory |
+| v1.1 | Scoped baseline — freshman-only, no RAG, no tools |
+| v1.2 | RAG-grounded answers with source citations |
+| v1.3 | Full agent — RAG + support case tool + session memory |
+
+---
+
+## Project Structure
+
+```
+BSE41014_capstone_group_m_eve/
+├── src/
+│   ├── app.py                      # Streamlit UI
+│   ├── llm_client.py               # Gemini calls + RAG injection (v1.0–v1.2)
+│   ├── run_deterministic_checks.py # Week 7 scripted scenario checks
+│   ├── run_scenarios.py            # Week 7 live E2E scenario runner
+│   ├── agent/
+│   │   └── state.py                # Session state (Agent Task Contract §4)
+│   ├── rag/
+│   │   ├── download_sources.py     # Step 1: download corpus documents
+│   │   ├── extract_text.py         # Step 2: extract text from PDFs/HTML
+│   │   ├── chunk_text.py           # Step 3: split into ~1500-char chunks
+│   │   ├── embed_chunks.py         # Step 4: generate Gemini embeddings
+│   │   ├── retrieve.py             # Cosine similarity retrieval
+│   │   └── run_eval.py             # Week 3 RAG evaluation (15 questions)
+│   └── tools/
+│       ├── orchestrate.py          # Sense→Plan→Act→Observe loop (v1.3)
+│       ├── handlers.py             # retrieve_documents + create_support_case
+│       └── case_store.py           # Local draft storage + validation
+├── prompts/
+│   ├── v1.0_baseline.txt
+│   ├── v1.1_baseline.txt
+│   ├── v1.2_baseline.txt
+│   └── v1.3_tools.txt
+├── data/
+│   └── chunks/
+│       └── chunks.json             # Committed — pre-chunked corpus text
+├── docs/
+│   ├── Architecture/               # Architecture diagrams (SVG, PNG, PDF)
+│   ├── evaluation/                 # RAG eval, Week 7 scenarios, failure catalogue
+│   ├── requirements/               # Agent Task Contract, Prompt Spec, Tool Catalogue
+│   └── weekly-reports/             # Week 1–7 progress reports
+├── evidence/
+│   ├── screenshots/                # Guardrails, ClickUp, GitHub evidence
+│   └── traces/                     # T1–T3 execution traces (Week 5)
+├── .env.example
+├── requirements.txt
+└── README.md
+```
+
+---
 
 ## Prerequisites
 
-1. Install dependencies from the repo root:
+**Python 3.11+** is required.
+
+1. Clone the repository and install dependencies from the repo root:
    ```
    pip install -r requirements.txt
    ```
-2. Make sure you have a `.env` file at the repo root containing:
+
+2. Copy `.env.example` to `.env` and add your Gemini API key:
    ```
    GEMINI_API_KEY=your_key_here
    ```
    Get a free key at https://aistudio.google.com
 
-## Run order
+---
 
-Run these from inside `src/rag/`, **in this exact order** — each step depends
-on the output of the one before it:
+## RAG Pipeline Setup (required before running v1.2 or v1.3)
 
-1. **`python download_sources.py`**
-   Downloads all sources listed in the Corpus/Source Register to
-   `data/raw_docs/`. Takes a few seconds. Safe to re-run any time.
+Run these from inside `src/rag/`, **in this exact order**:
 
-2. **`python extract_text.py`**
-   Extracts plain text from the downloaded PDFs/HTML pages into
-   `data/extracted/`, plus a `manifest.json` recording each source's title
-   and URL for citation purposes.
+```
+cd src/rag
+python download_sources.py
+python extract_text.py
+python chunk_text.py
+python embed_chunks.py
+```
 
-3. **`python chunk_text.py`**
-   Splits the extracted text into ~1,500-character chunks, saved to
-   `data/chunks/chunks.json`. This file IS committed to the repo (it's
-   small, human-readable text — useful to see without re-running anything).
+| Step | Script | Output | Notes |
+|------|--------|--------|-------|
+| 1 | `download_sources.py` | `data/raw_docs/` | Downloads PDFs and HTML pages |
+| 2 | `extract_text.py` | `data/extracted/` + `manifest.json` | Extracts plain text |
+| 3 | `chunk_text.py` | `data/chunks/chunks.json` | ~1500-char chunks |
+| 4 | `embed_chunks.py` | `data/chunks/chunks_with_embeddings.json` | Uses Gemini API quota |
 
-4. **`python embed_chunks.py`**
-   Generates an embedding vector for every chunk using Gemini's embedding
-   model, saved to `data/chunks/chunks_with_embeddings.json`.
-   **This step uses real API quota** (Gemini's free tier has a daily limit —
-   see note below) and can take a minute or two for ~90 chunks.
-   If it stops partway (e.g. due to a quota error), it's safe to just run it
-   again — it saves progress after every batch and resumes automatically
-   rather than starting over.
+Step 4 uses real API quota. If it stops with a `RESOURCE_EXHAUSTED` / `429` error, re-run it — it resumes from where it stopped. The free tier quota resets daily (~10:00 AM EAT).
 
-Once step 4 finishes, retrieval and the RAG-enabled app (prompt version
-v1.2) are ready to use.
+`chunks.json` (Step 3 output) is committed to the repo so you can inspect the corpus without re-running Steps 1–3.
 
-## Running the app
+---
 
-From the repo root:
+## Running the App
+
+From the **repo root**:
 ```
 python -m streamlit run src/app.py
 ```
-Select **v1.2** in the sidebar to get RAG-grounded, source-cited answers.
-v1.0 and v1.1 remain non-RAG baselines for comparison (see
-`docs/requirements/prompt-specification.md`).
+
+- Select **v1.2** in the sidebar for RAG-grounded, source-cited answers.
+- Select **v1.3** for the full agent with the support case tool.
+- v1.0 and v1.1 are non-RAG baselines kept for comparison.
+
+For v1.3, the support case tool only becomes available after clicking **"I agree to save a support draft"** in the sidebar.
+
+---
+
+## Running the Evaluations
+
+**Deterministic checks** (no API calls, no quota used):
+```
+cd src
+python run_deterministic_checks.py
+```
+Outputs a PASS/FAIL line per scenario and writes `deterministic_results.json`.
+
+**Week 3 RAG evaluation** (15 questions, uses API quota):
+```
+cd src/rag
+python run_eval.py
+```
+Outputs results to `docs/evaluation/rag_eval_raw.json`.
+
+**Week 7 live E2E scenarios** (uses API quota):
+```
+cd src
+python run_scenarios.py ../docs/evaluation/Group_M_Week7_Scenario_Evaluation.xlsx --repeat 1
+```
+
+---
+
+## Agent Design
+
+The v1.3 agent follows the **Sense → Plan/Decide → Act → Observe → Stop** loop defined in the Agent Task Contract (see `docs/requirements/`):
+
+- **Sense**: deterministic pre-checks block prompt injection (S6), out-of-scope users (S4), and blocked topics (S5) before the model is ever called.
+- **Plan/Decide**: Gemini decides which tool to call (retrieve or create case).
+- **Act**: the orchestration layer — not the model — executes the call.
+- **Observe**: tool results are fed back to the model.
+- **Stop**: one of 8 documented stop conditions (S1–S8) ends the turn.
+
+Limits enforced in code (not by the model):
+- Max 3 orchestration rounds per turn
+- Max 3 tool calls per turn
+- Max 1 support draft per session
+
+---
+
+## Evaluation Results Summary
+
+| Week | Scope | Result |
+|------|-------|--------|
+| Week 3 | RAG retrieval (15 questions) | 11/15 pass (73%) |
+| Week 7 | Full agent (36 scenarios) | 29/36 pass (80.5%) |
+
+Known failures documented in `docs/evaluation/failure_catalogue_week7.md`.
+
+---
+
+## Key Documents
+
+| Document | Location |
+|----------|----------|
+| Agent Task Contract | `docs/requirements/Agent Task Contract M EVE.pdf` |
+| Prompt Specification | `docs/requirements/Group M - Prompt Specification v1.0.pdf` |
+| Tool Catalogue & API Schemas | `docs/requirements/Tool_Catalogue_and_API_Schemas.pdf` |
+| Corpus/Source Register | `docs/requirements/Group M - Corpus Source Register.pdf` |
+| Architecture Diagram | `docs/Architecture/Group_M_eve_Agent Architecture Diagram.svg` |
+| Week 7 Evaluation Report | `docs/evaluation/week7_evaluation.md` |
+| Failure Catalogue | `docs/evaluation/failure_catalogue_week7.md` |
+
+---
 
 ## Notes
 
-- **Gemini's free tier quota resets daily**, roughly 10:00 AM East Africa
-  Time. If `embed_chunks.py` fails with a `RESOURCE_EXHAUSTED` / `429`
-  error, you've likely hit the daily limit — wait and re-run later; it will
-  resume from wherever it stopped.
-- The similarity threshold used in retrieval (`MIN_SIMILARITY` in
-  `retrieve.py`) was tuned against real test questions — see
-  `docs/evaluation/` for the reasoning and the retrieval failures this
-  uncovered.
-- The dynamic timetable portal (`timetable.mak.ac.ug`) is intentionally
-  excluded from the corpus, per the Corpus/Source Register's own note that
-  it cannot be embedded as static text.
+- The dynamic timetable portal (`timetable.mak.ac.ug`) is intentionally excluded from the corpus — it cannot be embedded as static text (see Corpus/Source Register).
+- The similarity threshold (`MIN_SIMILARITY = 0.70` in `retrieve.py`) was tuned against real test questions — see `docs/evaluation/rag_eval.md` for the reasoning.
+- `data/raw_docs/`, `data/extracted/`, and `data/chunks/chunks_with_embeddings.json` are excluded from version control (regenerable). Only `data/chunks/chunks.json` is committed.

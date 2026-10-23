@@ -1,0 +1,29 @@
+{
+  "id": "O4",
+  "scenario": "Live model failure: latency and error fields recorded, no tools run.",
+  "log": {
+    "turn_id": "579399d8-3bf9-4dcb-966d-1fe5592dcf82",
+    "session_id": "d07c6acc-b0f2-47e2-9608-1254299c6eb9",
+    "started_at": "2026-10-14T21:28:34.524797+00:00",
+    "ended_at": "2026-10-14T21:28:42.859493+00:00",
+    "latency_ms": 8334,
+    "model": {
+      "name": "gemini-3.6-flash",
+      "rounds": 1
+    },
+    "prompt": {
+      "id": "v1.3",
+      "case_history_note": false
+    },
+    "student_message": "How do I activate my Makerere webmail account?",
+    "retrieval": [],
+    "tools": [],
+    "error": "503 UNAVAILABLE. {'error': {'code': 503, 'message': 'This model is currently experiencing high demand. Spikes in demand are usually temporary. Please try again later.', 'status': 'UNAVAILABLE'}}",
+    "outcome": {
+      "stop_condition": null,
+      "draft_saved": false,
+      "active_case_id": null,
+      "reply_preview": "Error: 503 UNAVAILABLE. {'error': {'code': 503, 'message': 'This model is currently experiencing high demand. Spikes in demand are usually temporary. Please try again later.', 'status': 'UNAVAILABLE'}}"
+    }
+  }
+}

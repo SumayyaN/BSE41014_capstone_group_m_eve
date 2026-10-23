@@ -1,0 +1,80 @@
+{
+  "id": "O3",
+  "scenario": "Real retrieve_documents result written through the Week 7 logger. Gemini returned 503, so this sample is retrieval-backed rather than a full model turn. Re-run O3 when the API recovers for a full path.",
+  "log": {
+    "turn_id": "3c29ff0c-29e4-4967-bb5b-c19d5349b38c",
+    "session_id": "ef06c8df-5225-4d97-a853-b6cae2ab9274",
+    "started_at": "2026-10-14T21:32:34.912643+00:00",
+    "ended_at": "2026-10-14T21:32:36.742273+00:00",
+    "latency_ms": 1829,
+    "model": {
+      "name": "gemini-3.6-flash",
+      "rounds": 1
+    },
+    "prompt": {
+      "id": "v1.3",
+      "case_history_note": false
+    },
+    "student_message": "How do I activate my Makerere webmail account?",
+    "retrieval": [
+      {
+        "query": "activate Makerere webmail account",
+        "status": "ok",
+        "retrieved_count": 3,
+        "sources": [
+          {
+            "source_title": "Activating Your Makerere Webmail Account",
+            "source_url": "https://answers.mak.ac.ug/sites/default/files/article-files/ACTIVATING%20YOUR%20MAKERERE%20WEBMAIL%20ACCOUNT.pdf",
+            "similarity_score": 0.8179973860818582
+          },
+          {
+            "source_title": "Activating Your Makerere Webmail Account",
+            "source_url": "https://answers.mak.ac.ug/sites/default/files/article-files/ACTIVATING%20YOUR%20MAKERERE%20WEBMAIL%20ACCOUNT.pdf",
+            "similarity_score": 0.8149240375044524
+          },
+          {
+            "source_title": "Freshers' Joining Instructions 2026/2027",
+            "source_url": "https://news.mak.ac.ug/wp-content/uploads/2026/06/Makerere-Freshers-Joining-Instructions-2026-2027-Jul26-1.pdf",
+            "similarity_score": 0.7658350480599078
+          }
+        ]
+      }
+    ],
+    "tools": [
+      {
+        "tool": "retrieve_documents",
+        "arguments": {
+          "query": "activate Makerere webmail account"
+        },
+        "result": {
+          "status": "ok",
+          "retrieved_count": 3,
+          "sources": [
+            {
+              "source_title": "Activating Your Makerere Webmail Account",
+              "source_url": "https://answers.mak.ac.ug/sites/default/files/article-files/ACTIVATING%20YOUR%20MAKERERE%20WEBMAIL%20ACCOUNT.pdf",
+              "similarity_score": 0.8179973860818582
+            },
+            {
+              "source_title": "Activating Your Makerere Webmail Account",
+              "source_url": "https://answers.mak.ac.ug/sites/default/files/article-files/ACTIVATING%20YOUR%20MAKERERE%20WEBMAIL%20ACCOUNT.pdf",
+              "similarity_score": 0.8149240375044524
+            },
+            {
+              "source_title": "Freshers' Joining Instructions 2026/2027",
+              "source_url": "https://news.mak.ac.ug/wp-content/uploads/2026/06/Makerere-Freshers-Joining-Instructions-2026-2027-Jul26-1.pdf",
+              "similarity_score": 0.7658350480599078
+            }
+          ]
+        }
+      }
+    ],
+    "error": "model unavailable; retrieval logged without generate_content",
+    "outcome": {
+      "stop_condition": "S1",
+      "draft_saved": false,
+      "active_case_id": null,
+      "reply_preview": "Retrieval succeeded while the model was unavailable."
+    }
+  }
+}
