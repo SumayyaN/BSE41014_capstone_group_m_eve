@@ -9,7 +9,7 @@
       ],
       "student_message": "My registration number is 23/A/93939. Wi-Fi will not connect. Please create a support draft in category it_webmail_wifi.",
       "reply": "I do not have confirmed information about Wi-Fi connection troubleshooting in the approved university documents.\n\nRegarding your support draft, I was unable to create it because 23/A/93939 is not a valid registration number format. Registration numbers must start with two digits, followed by U or X, four or five digits, and optionally /PS or /EVE (such as 23/U/93939). Please provide a valid registration number so I can assist you with creating the support draft.",
-      "stop_condition": null,
+      "stop_condition": null, 
       "iteration_count": 3,
       "tools": [
         {
