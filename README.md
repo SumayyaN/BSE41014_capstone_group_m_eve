@@ -8,6 +8,16 @@ Group M (Evening) | Makerere University
 
 A RAG-powered AI support agent that helps Makerere University freshmen with onboarding questions — webmail setup, campus Wi-Fi, ACMIS portal activation, and registration. It grounds every answer in real university documents and can save a support draft for staff follow-up.
 
+The reproducible release is Git tag **`v1.4.0`**. Tag `v1.3.0` is the Week 7 snapshot and does not include this README. To run the release:
+
+```
+git clone https://github.com/SumayyaN/BSE41014_capstone_group_m_eve.git
+cd BSE41014_capstone_group_m_eve
+git checkout v1.4.0
+```
+
+Then follow Prerequisites, RAG Pipeline Setup, and Running the App below.
+
 Four prompt versions are included for comparison:
 
 | Version | Description |
@@ -30,6 +40,8 @@ BSE41014_capstone_group_m_eve/
 │   ├── run_scenarios.py            # Week 7 live E2E scenario runner
 │   ├── agent/
 │   │   └── state.py                # Session state (Agent Task Contract §4)
+│   ├── observability/
+│   │   └── turn_log.py             # Week 7 turn log (model, retrieval, tools, latency)
 │   ├── rag/
 │   │   ├── download_sources.py     # Step 1: download corpus documents
 │   │   ├── extract_text.py         # Step 2: extract text from PDFs/HTML
@@ -56,7 +68,7 @@ BSE41014_capstone_group_m_eve/
 │   └── weekly-reports/             # Week 1–7 progress reports
 ├── evidence/
 │   ├── screenshots/                # Guardrails, ClickUp, GitHub evidence
-│   └── traces/                     # T1–T3 execution traces (Week 5)
+│   └── traces/                     # Week 5 T1–T3 and Week 7 O1–O4 samples
 ├── .env.example
 ├── requirements.txt
 └── README.md
@@ -169,7 +181,16 @@ Limits enforced in code (not by the model):
 | Week 3 | RAG retrieval (15 questions) | 11/15 pass (73%) |
 | Week 7 | Full agent (36 scenarios) | 29/36 pass (80.5%) |
 
-Known failures documented in `docs/evaluation/failure_catalogue_week7.md`.
+Known failures documented in `docs/evaluation/failure_catalogue_week7.md`. These are still open on this release:
+
+- An information question that contains "misconduct" or "admission" can be refused as a blocked decision.
+- A Gemini 503 is shown to the student as the raw error text.
+- "Second-year" (and similar year names) is not treated as outside freshman scope.
+- A short placeholder `issue_summary` can still be saved.
+- A fee-decision summary can be saved when the category is not `fees_informational`.
+- Some fee-policy questions score below the 0.70 retrieval cutoff.
+
+Week 7 turn logs are written to `logs/` and are not committed. Checked-in samples are `evidence/traces/O1_blocked_topic.json` through `O4_model_unavailable.json`. Regenerate them with `python src/traces/run_week7_observability.py`.
 
 ---
 
@@ -184,6 +205,7 @@ Known failures documented in `docs/evaluation/failure_catalogue_week7.md`.
 | Architecture Diagram | `docs/Architecture/Group_M_eve_Agent Architecture Diagram.svg` |
 | Week 7 Evaluation Report | `docs/evaluation/week7_evaluation.md` |
 | Failure Catalogue | `docs/evaluation/failure_catalogue_week7.md` |
+| Observability evidence | `docs/evaluation/Group_M_eve_Observability_Tracing_Evidence.pdf` |
 
 ---
 
