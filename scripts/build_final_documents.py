@@ -623,7 +623,7 @@ def evidence_pack() -> Handout:
         ("Evaluation", "36 scenarios, 29/36 (80.5%). week7_evaluation.md and the scenario workbook."),
         ("Observability", "src/observability/turn_log.py. Samples O1-O4. Observability PDF."),
         ("Guardrails", "Sense stops, validation, agreement flag, tool allow-list. Guardrail evidence PDF."),
-        ("Week 8 retest", "16/16 deterministic checks. 5/5 scope checks. Failure 6 left open."),
+        ("Week 8 retest", "16/16 deterministic checks. The code check is 5/5. Live run: B07 and N03 pass, B06 is refused by the model, and I02 still misses."),
     ]
     for title, body in rows:
         pdf.h2(title)
@@ -667,7 +667,7 @@ def evidence_pack() -> Handout:
         "not rebuilt and the questions were not re-embedded."
     )
     pdf.h1("5. Reproduce")
-    pdf.bullet("git checkout v1.5.0")
+    pdf.bullet("git checkout week8-release, at commit 8139dc3. Tag v1.5.0 is the earlier hardened release and does not include this live retest.")
     pdf.bullet("pip install -r requirements.txt")
     pdf.bullet("Copy .env.example to .env and set GEMINI_API_KEY for any live run.")
     pdf.bullet("From src/rag/: download_sources.py, extract_text.py, chunk_text.py, embed_chunks.py.")
