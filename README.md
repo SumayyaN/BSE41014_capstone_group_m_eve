@@ -8,12 +8,12 @@ Group M (Evening) | Makerere University
 
 A RAG-powered AI support agent that helps Makerere University freshmen with onboarding questions — webmail setup, campus Wi-Fi, ACMIS portal activation, and registration. It grounds every answer in real university documents and can save a support draft for staff follow-up.
 
-The reproducible release is Git tag **`v1.4.0`**. Tag `v1.3.0` is the Week 7 snapshot and does not include this README. To run the release:
+The reproducible final release is Git tag **`v1.5.0`**. Tag `v1.3.0` is the Week 7 evaluation snapshot. Tag `v1.4.0` is the README release before the Week 8 defect fixes. To run the final release:
 
 ```
 git clone https://github.com/SumayyaN/BSE41014_capstone_group_m_eve.git
 cd BSE41014_capstone_group_m_eve
-git checkout v1.4.0
+git checkout v1.5.0
 ```
 
 Then follow Prerequisites, RAG Pipeline Setup, and Running the App below.
@@ -37,6 +37,7 @@ BSE41014_capstone_group_m_eve/
 │   ├── app.py                      # Streamlit UI
 │   ├── llm_client.py               # Gemini calls + RAG injection (v1.0–v1.2)
 │   ├── run_deterministic_checks.py # Week 7 scripted scenario checks
+│   ├── week8_retest.py             # Week 8 retest of the hardened failures
 │   ├── run_scenarios.py            # Week 7 live E2E scenario runner
 │   ├── agent/
 │   │   └── state.py                # Session state (Agent Task Contract §4)
@@ -65,7 +66,7 @@ BSE41014_capstone_group_m_eve/
 │   ├── Architecture/               # Architecture diagrams (SVG, PNG, PDF)
 │   ├── evaluation/                 # RAG eval, Week 7 scenarios, failure catalogue
 │   ├── requirements/               # Agent Task Contract, Prompt Spec, Tool Catalogue
-│   └── weekly-reports/             # Week 1–7 progress reports
+│   └── weekly-reports/             # Week 1–8 progress reports
 ├── evidence/
 │   ├── screenshots/                # Guardrails, ClickUp, GitHub evidence
 │   └── traces/                     # Week 5 T1–T3 and Week 7 O1–O4 samples
@@ -181,14 +182,12 @@ Limits enforced in code (not by the model):
 | Week 3 | RAG retrieval (15 questions) | 11/15 pass (73%) |
 | Week 7 | Full agent (36 scenarios) | 29/36 pass (80.5%) |
 
-Known failures documented in `docs/evaluation/failure_catalogue_week7.md`. These are still open on this release:
+Known failures are documented in `docs/evaluation/failure_catalogue_week7.md`. Week 8 fixed five of them. Re-run the scripted checks with `python week8_retest.py` and `python run_deterministic_checks.py` from `src/`. The deterministic suite is 16/16 after the fixes.
 
-- An information question that contains "misconduct" or "admission" can be refused as a blocked decision.
-- A Gemini 503 is shown to the student as the raw error text.
-- "Second-year" (and similar year names) is not treated as outside freshman scope.
-- A short placeholder `issue_summary` can still be saved.
-- A fee-decision summary can be saved when the category is not `fees_informational`.
-- Some fee-policy questions score below the 0.70 retrieval cutoff.
+Still open on this release:
+
+- Some fee-policy questions score below the 0.70 retrieval cutoff (Week 7 scenario I02, and Week 3 Q5). The cutoff was not retuned.
+- A live turn can take longer than 10 seconds. Week 7 recorded 13.6 seconds on a memory lookup and 12.5 seconds on case creation.
 
 Week 7 turn logs are written to `logs/` and are not committed. Checked-in samples are `evidence/traces/O1_blocked_topic.json` through `O4_model_unavailable.json`. Regenerate them with `python src/traces/run_week7_observability.py`.
 
@@ -206,6 +205,10 @@ Week 7 turn logs are written to `logs/` and are not committed. Checked-in sample
 | Week 7 Evaluation Report | `docs/evaluation/week7_evaluation.md` |
 | Failure Catalogue | `docs/evaluation/failure_catalogue_week7.md` |
 | Observability evidence | `docs/evaluation/Group_M_eve_Observability_Tracing_Evidence.pdf` |
+| Week 8 retest | `docs/evaluation/week8_retest.json` |
+| Final engineering report | `docs/Group_M_eve_Final_Engineering_Report.pdf` |
+| Final evidence pack | `docs/evaluation/Group_M_eve_Final_Evidence_Pack.pdf` |
+| Week 8 progress report | `docs/weekly-reports/Week 8 Progress Report.pdf` |
 
 ---
 

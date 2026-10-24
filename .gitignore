@@ -36,6 +36,9 @@ chunks_with_embeddings.json
 chroma_db/
 vector_store/
 
+# Scripted-check output from src/run_deterministic_checks.py
+src/deterministic_results.json
+
 # --- Logs & Traces ---
 # Observability traces and logs (Week 7 requirement) are generated, not source
 *.log
