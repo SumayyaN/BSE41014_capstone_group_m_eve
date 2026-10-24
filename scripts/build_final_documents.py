@@ -392,15 +392,27 @@ def engineering_report() -> Handout:
         "are validation errors. Fee-decision language is rejected in every category."
     )
     pdf.p(
-        "The retest did not re-score all 36 live scenarios, because that run spends "
-        "API quota and the five defects are deterministic. python run_deterministic_checks.py "
-        "from src/ passed 16 of 16, including C07, C08, R04, and R05, which had "
-        "encoded the expected behaviour and were failing before the fix. "
-        "python week8_retest.py passed 5 of 5: the Code of Conduct question, the "
-        "admission-letter question, the admissions decision, the grade change, and "
-        "the second-year sentence. Results are in docs/evaluation/week8_retest.json. "
-        "Failure 6, the retrieval miss, was not changed. That is the remaining "
-        "documented limit."
+        "python run_deterministic_checks.py from src/ passed 16 of 16, including "
+        "C07, C08, R04, and R05, which had encoded the expected behaviour and were "
+        "failing before the fix. python week8_retest.py passed 5 of 5 on the code "
+        "checks: the Code of Conduct question and the admission-letter question are "
+        "not blocked, while an admissions decision, a grade change, and the "
+        "second-year sentence still stop before the model. Those results are in "
+        "docs/evaluation/week8_retest.json."
+    )
+    pdf.p(
+        "On 24 October 2026 the 19 live chats were run again from "
+        "docs/evaluation/week8_runner_input.xlsx. The committed Week 7 results file "
+        "has 35 scenarios, not the 36 named in the Week 7 write-up. The 29/36 figure "
+        "is not rewritten. Eighteen chats finished. B07 now cites the Joining "
+        "Instructions and lists the registration documents, stop S1. N03 now stops "
+        "at S4 with no model call. I02 still returns no_match and stops at S3. B06 "
+        "is no longer blocked in code, but the model refuses it and does not search, "
+        "so the grounded-answer criterion still fails. M01, the memory question, "
+        "stopped because Gemini returned 429 after the free-tier quota was used up. "
+        "That turn is not scored as a product failure. Replies are in "
+        "docs/evaluation/week8_live_results.csv. C05 saved one fees draft, "
+        "CASE-2026-000001, in 11.4 seconds."
     )
     pdf.p(
         "The checked-in traces are the inspection path when a marker cannot run "
@@ -554,6 +566,8 @@ def engineering_report() -> Handout:
         "docs/evaluation/week7_evaluation.md",
         "docs/evaluation/failure_catalogue_week7.md",
         "docs/evaluation/week8_retest.json",
+        "docs/evaluation/week8_live_results.csv",
+        "docs/evaluation/week8_runner_input.xlsx",
         "docs/evaluation/Group_M_eve_Observability_Tracing_Evidence.pdf",
         "docs/evaluation/guardrail_Implementation_Evidence.pdf",
         "docs/evaluation/Group_M_eve_Final_Evidence_Pack.pdf",
@@ -565,10 +579,11 @@ def engineering_report() -> Handout:
 
     pdf.h1("Appendix B. Week 8 retest")
     pdf.p(
-        "Deterministic suite after the fixes: 16 PASS, 0 FAIL. Separate scope retest: "
-        "B06 PASS, B07 PASS, admissions decision still blocked, grade change still "
-        "blocked, N03 second-year sentence still out of scope. I02 was not re-run "
-        "against a new index because the index and the cutoff were not changed."
+        "Deterministic suite after the fixes: 16 PASS, 0 FAIL. The code retest lets "
+        "B06 and B07 through and still blocks an admissions decision, a grade change, "
+        "and a second-year sentence. The 24 October live run confirms B07 and N03. "
+        "I02 still misses at 0.70. B06 is refused by the model. M01 did not finish "
+        "because the Gemini quota returned 429."
     )
     return pdf
 
@@ -629,15 +644,22 @@ def evidence_pack() -> Handout:
         "still blocked. \"Please change my grade\" is still blocked. \"I'm a "
         "second-year student and need the Wi-Fi password.\" is still out of scope."
     )
-    pdf.h1("4. What remains unproved")
+    pdf.h1("4. Live retest on 24 October 2026")
     pdf.p(
-        "The full 36-scenario live run was not repeated after the fixes. The five "
-        "repairs are covered by the scripted checks. A live rerun would also depend "
-        "on Gemini availability. During Week 7 observability, gemini-3.6-flash "
-        "returned 503 under load. O3 was completed from retrieval because the model "
-        "call failed, and the sample says so. O4 stores that 503. The student-facing "
-        "path for the same error is now the short busy message, which R04 checks "
-        "without calling the network."
+        "Nineteen live chats were run from docs/evaluation/week8_runner_input.xlsx. "
+        "Eighteen finished. The replies are in docs/evaluation/week8_live_results.csv. "
+        "B07 passes with a cited list of registration documents. N03 stops at S4. "
+        "I02 still returns no_match and stops at S3. B06 reaches the model, which "
+        "refuses the Code of Conduct question without searching. M01 did not finish: "
+        "Gemini returned 429 RESOURCE_EXHAUSTED. The Week 7 score of 29/36 is not "
+        "rewritten. The results file used for this run has 35 rows."
+    )
+    pdf.p(
+        "During Week 7 observability, gemini-3.6-flash returned 503 under load. O4 "
+        "stores that 503. The student-facing path for the same class of error is "
+        "now the short busy message, which R04 checks without calling the network. "
+        "The live runner treats that busy sentence as an infrastructure error and "
+        "retries it. M01 still exhausted the free-tier quota after those retries."
     )
     pdf.p(
         "I02 and Week 3 Q5 remain retrieval misses at the 0.70 cutoff. No new "
@@ -652,7 +674,7 @@ def evidence_pack() -> Handout:
     pdf.bullet("From the repo root: python -m streamlit run src/app.py")
     pdf.bullet("From src/: python run_deterministic_checks.py")
     pdf.bullet("From src/: python week8_retest.py")
-    pdf.bullet("Live scenarios, uses quota: python run_scenarios.py ../docs/evaluation/Group_M_Week7_Scenario_Evaluation.xlsx --repeat 1")
+    pdf.bullet("Live chats, uses quota: python run_scenarios.py ../docs/evaluation/week8_runner_input.xlsx --repeat 1")
     return pdf
 
 
@@ -682,9 +704,9 @@ def progress_report() -> Handout:
         "and prepared the presentation outside the repository."
     )
     for line in [
-        "Fixed over-refusal of information questions, the raw 503 reply, second-year scope, placeholder summaries, and fee-decision text in every category.",
-        "Retest: 16/16 deterministic checks and 5/5 scope checks. Recorded in docs/evaluation/week8_retest.json and the failure catalogue.",
-        "Left the 0.70 retrieval miss (I02) as a known limit. The cutoff was not changed.",
+        "Fixed the raw 503 reply, second-year scope, placeholder summaries, and fee-decision text in every category. Information questions are no longer blocked in code.",
+        "Scripted retest: 16/16 deterministic checks and 5/5 code checks. Recorded in docs/evaluation/week8_retest.json.",
+        "Live retest, 24 October 2026: 18 of 19 chats finished. B07 and N03 pass. I02 still misses. B06 is refused by the model. M01 stopped on Gemini quota 429. Results: docs/evaluation/week8_live_results.csv.",
         "Final engineering report: docs/Group_M_eve_Final_Engineering_Report.pdf.",
         "Evidence pack: docs/evaluation/Group_M_eve_Final_Evidence_Pack.pdf.",
         "Release tag v1.5.0 on branch week8-release. v1.3.0 remains the Week 7 snapshot. v1.4.0 remains the earlier README tag.",
@@ -706,9 +728,10 @@ def progress_report() -> Handout:
     pdf.h1("Failures and the response")
     pdf.p(
         "Gemini returned 503 under load during Week 7 tracing. The student no longer "
-        "sees the raw error. The log still stores it. The full 36-scenario live set "
-        "was not repeated after the fixes. The scripted checks cover the five "
-        "defects. ClickUp task checkboxes for Week 8 were not updated from this "
+        "sees the raw error. The log still stores it. The 24 October live run then "
+        "hit 429 on M01 after the free-tier quota was used. I02 still misses the "
+        "fee passage at 0.70, and the model still refuses the Code of Conduct "
+        "question after the code block was removed. ClickUp task checkboxes for Week 8 were not updated from this "
         "hand-in. The workspace used through the project is "
         "https://app.clickup.com/1200410000000374. The Week 6 list, which is the "
         "last list URL confirmed for this group, is "
@@ -716,7 +739,8 @@ def progress_report() -> Handout:
     )
     pdf.h1("Links")
     pdf.bullet("Repository: https://github.com/SumayyaN/BSE41014_capstone_group_m_eve")
-    pdf.bullet("Branch: week8-release. Final tag: v1.5.0. Earlier tags: v1.4.0 and v1.3.0.")
+    pdf.bullet("Branch: week8-release. Release tag: v1.5.0. The live-retest files are on this branch after that tag. Earlier tags: v1.4.0 and v1.3.0.")
+    pdf.bullet("Live replies: docs/evaluation/week8_live_results.csv")
     pdf.bullet("Week 6 ClickUp list, not a Week 8 list: https://app.clickup.com/1200410000000374/v/l/6-1200410000023701-1")
     pdf.h1("Contributions")
     pdf.p(
@@ -947,7 +971,7 @@ def presentation():
         "A placeholder summary is rejected. \"Unspecified onboarding issue\" does not save.",
         "The agent cannot resolve, close, or reassign.",
         "Admissions help and grade changes stop at S5 before the model is called.",
-        "A policy question, such as what the Code of Conduct says, is allowed through to retrieval.",
+        "The code no longer blocks a Code of Conduct question. In the live retest the model still refused it and did not search.",
     ], 20)
     _notes(s, "1 to 2 minutes. Human control is the agreement button and the fact that staff, not the agent, finish the case.")
 
@@ -956,17 +980,17 @@ def presentation():
     _bullet_frame(s, 0.6, 1.4, 12, 5.2, [
         "Week 3: 11 of 15 retrieval questions passed (73%).",
         "Week 7: 29 of 36 scenarios passed (80.5%). This number was not rewritten.",
-        "Week 8 scripted checks: 16 of 16. Scope retest: 5 of 5.",
-        "Fixed: over-refusal, raw 503 text, second-year scope, placeholder drafts, fee text in any category.",
-        "Open: some relevant passages still score below 0.70. Latency can exceed 10 seconds.",
+        "Week 8 scripted checks: 16 of 16. Code retest: 5 of 5.",
+        "Live retest, 18 of 19 chats: B07 and N03 now pass. I02 still misses. B06 is a model refusal.",
+        "Open: the 0.70 retrieval miss, the Code of Conduct model refusal, and M01, which stopped on quota.",
         "No public deployment. The release is local Streamlit from tag v1.5.0.",
     ], 20)
-    _notes(s, "If asked for the headline number, say 29 of 36, then say five of the seven misses now have scripted fixes and the retrieval miss does not.")
+    _notes(s, "If asked for the headline number, say 29 of 36 was not rewritten. Then say the 24 October live run passed B07 and N03, still misses I02, and the model still refuses B06. M01 did not finish because the quota returned 429.")
 
     s = _blank(prs)
     _add_text_box(s, 0.6, 0.35, 12, 0.7, "What we would not claim", 32, True, MAROON)
     _bullet_frame(s, 0.6, 1.4, 12, 5.2, [
-        "We did not re-run all 36 live scenarios after the Week 8 fixes.",
+        "Eighteen of 19 live chats were re-run. M01 stopped on quota. The Week 7 score was not replaced.",
         "We did not connect to ACMIS, the fees ledger, or a staff inbox.",
         "We did not build a live MCP server. We wrote an interface specification for the draft tool.",
         "Drafts stay in a local JSON file until a person deletes them. There is no 90-day job.",

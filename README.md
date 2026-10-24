@@ -182,12 +182,14 @@ Limits enforced in code (not by the model):
 | Week 3 | RAG retrieval (15 questions) | 11/15 pass (73%) |
 | Week 7 | Full agent (36 scenarios) | 29/36 pass (80.5%) |
 
-Known failures are documented in `docs/evaluation/failure_catalogue_week7.md`. Week 8 fixed five of them. Re-run the scripted checks with `python week8_retest.py` and `python run_deterministic_checks.py` from `src/`. The deterministic suite is 16/16 after the fixes.
+Known failures are documented in `docs/evaluation/failure_catalogue_week7.md`. Week 8 fixed five code defects. The scripted checks are `python week8_retest.py` and `python run_deterministic_checks.py` from `src/`. The deterministic suite is 16/16. On 24 October 2026 the 19 live chats in `docs/evaluation/week8_runner_input.xlsx` were run again. Eighteen finished. Results are in `docs/evaluation/week8_live_results.csv`. The Week 7 score of 29/36 is not rewritten. The committed results file has 35 rows.
 
 Still open on this release:
 
-- Some fee-policy questions score below the 0.70 retrieval cutoff (Week 7 scenario I02, and Week 3 Q5). The cutoff was not retuned.
-- A live turn can take longer than 10 seconds. Week 7 recorded 13.6 seconds on a memory lookup and 12.5 seconds on case creation.
+- Some fee-policy questions score below the 0.70 retrieval cutoff (Week 7 scenario I02, and Week 3 Q5). The 24 October live run still returned `no_match` for I02. The cutoff was not retuned.
+- The Code of Conduct question (B06) is no longer blocked in code. In the live run the model still refused it and did not search.
+- M01, the memory question, did not finish. Gemini returned 429 after the free-tier quota was exhausted.
+- A live turn can take longer than 10 seconds. Week 7 recorded 13.6 seconds on a memory lookup and 12.5 seconds on case creation. The 24 October fees draft (C05) took 11.4 seconds.
 
 Week 7 turn logs are written to `logs/` and are not committed. Checked-in samples are `evidence/traces/O1_blocked_topic.json` through `O4_model_unavailable.json`. Regenerate them with `python src/traces/run_week7_observability.py`.
 
@@ -205,7 +207,8 @@ Week 7 turn logs are written to `logs/` and are not committed. Checked-in sample
 | Week 7 Evaluation Report | `docs/evaluation/week7_evaluation.md` |
 | Failure Catalogue | `docs/evaluation/failure_catalogue_week7.md` |
 | Observability evidence | `docs/evaluation/Group_M_eve_Observability_Tracing_Evidence.pdf` |
-| Week 8 retest | `docs/evaluation/week8_retest.json` |
+| Week 8 code retest | `docs/evaluation/week8_retest.json` |
+| Week 8 live retest | `docs/evaluation/week8_live_results.csv` |
 | Final engineering report | `docs/Group_M_eve_Final_Engineering_Report.pdf` |
 | Final evidence pack | `docs/evaluation/Group_M_eve_Final_Evidence_Pack.pdf` |
 | Week 8 progress report | `docs/weekly-reports/Week 8 Progress Report.pdf` |

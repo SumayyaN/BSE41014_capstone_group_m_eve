@@ -1,0 +1,2 @@
+id,run,turn,student_message,reply,stop_actual,iterations,tools_called,latency_s,model_calls,drafts_added,new_case_ids,infra_error,trace_file
+M01,1,1,My number is 26/u/10003. I already reported my webmail problem. What happened to my case?,The assistant is temporarily busy. Please try again in a few minutes.,,1,,1.17,1,0,,yes,M01_run1.json

@@ -119,7 +119,13 @@ def load_scenarios(path):
 
 
 def _is_infra_error(text: str) -> bool:
-    return bool(text) and text.startswith("Error:") and any(k in text for k in ("429", "503", "UNAVAILABLE", "RESOURCE_EXHAUSTED"))
+    if not text:
+        return False
+    if text.startswith("The assistant is temporarily busy."):
+        return True
+    return text.startswith("Error:") and any(
+        k in text for k in ("429", "503", "UNAVAILABLE", "RESOURCE_EXHAUSTED")
+    )
 
 
 def run_once(rec, pause):
