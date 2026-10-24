@@ -24,55 +24,78 @@ CREAM = RGBColor(0xF7, 0xF3, 0xEC)
 WHITE = RGBColor(0xFF, 0xFF, 0xFF)
 
 
+# 12 pt Times New Roman. Line height is in millimetres. 1.15 is the minimum.
+def _leading(spacing: float) -> float:
+    return 12 * spacing * 0.352778
+
+
 class Handout(FPDF):
-    def __init__(self, running_title: str, body: int = 11, leading: float = 5.4):
+    def __init__(self, running_title: str, spacing: float = 1.15):
         super().__init__(format="A4")
         self.running_title = running_title
-        self.body = body
-        self.leading = leading
-        self.set_auto_page_break(auto=True, margin=18)
-        self.set_margins(20, 18, 20)
+        self.leading = _leading(spacing)
+        self.show_chrome = False
+        self.body_origin = None
+        self.toc_entries = []
+        self.set_auto_page_break(auto=True, margin=20)
+        self.set_margins(25, 22, 25)
         self.add_font("TNR", "", TIMES)
         self.add_font("TNR", "B", TIMES_B)
         self.add_font("TNR", "I", TIMES_I)
 
     def header(self):
-        if self.page_no() == 1:
+        if not self.show_chrome:
             return
-        self.set_font("TNR", "I", 9)
-        self.set_text_color(40, 40, 40)
-        self.cell(0, 6, self.running_title, new_x="LMARGIN", new_y="NEXT")
-        self.line(20, 16, 190, 16)
-        self.ln(3)
+        self.set_font("TNR", "", 12)
+        self.set_text_color(0, 0, 0)
+        self.cell(0, self.leading, self.running_title, align="L", new_x="LMARGIN", new_y="NEXT")
+        self.ln(1)
 
     def footer(self):
-        self.set_y(-14)
-        self.set_font("TNR", "", 9)
-        self.set_text_color(40, 40, 40)
-        self.cell(0, 8, str(self.page_no()), align="C")
+        if not self.show_chrome or self.body_origin is None:
+            return
+        number = self.page_no() - self.body_origin + 1
+        self.set_y(-15)
+        self.set_font("TNR", "", 12)
+        self.set_text_color(0, 0, 0)
+        self.cell(0, self.leading, str(number), align="C")
+
+    def center_line(self, text: str, bold: bool = False):
+        self.set_font("TNR", "B" if bold else "", 12)
+        self.set_text_color(0, 0, 0)
+        self.multi_cell(0, self.leading, text, align="C", new_x="LMARGIN", new_y="NEXT")
 
     def h1(self, text: str):
+        if self.body_origin is not None:
+            self.toc_entries.append((text, self.page_no() - self.body_origin + 1))
         self.ln(2)
-        self.set_font("TNR", "B", 14)
+        self.set_font("TNR", "B", 12)
         self.set_text_color(0, 0, 0)
-        self.multi_cell(0, 7, text, new_x="LMARGIN", new_y="NEXT")
+        self.multi_cell(0, self.leading, text, align="L", new_x="LMARGIN", new_y="NEXT")
         self.ln(1)
 
     def h2(self, text: str):
         self.ln(1)
         self.set_font("TNR", "B", 12)
-        self.multi_cell(0, 6, text, new_x="LMARGIN", new_y="NEXT")
+        self.set_text_color(0, 0, 0)
+        self.multi_cell(0, self.leading, text, align="L", new_x="LMARGIN", new_y="NEXT")
         self.ln(0.5)
 
     def p(self, text: str):
-        self.set_font("TNR", "", self.body)
-        self.multi_cell(0, self.leading, text, align="L", new_x="LMARGIN", new_y="NEXT")
-        self.ln(1.6)
+        self.set_font("TNR", "", 12)
+        self.set_text_color(0, 0, 0)
+        self.multi_cell(0, self.leading, text, align="J", new_x="LMARGIN", new_y="NEXT")
+        self.ln(1.5)
 
     def bullet(self, text: str):
-        self.set_font("TNR", "", self.body)
-        self.multi_cell(0, self.leading, "- " + text, align="L", new_x="LMARGIN", new_y="NEXT")
-        self.ln(0.6)
+        self.set_font("TNR", "", 12)
+        self.set_text_color(0, 0, 0)
+        self.multi_cell(0, self.leading, "- " + text, align="J", new_x="LMARGIN", new_y="NEXT")
+        self.ln(0.8)
+
+    def begin_body(self):
+        self.show_chrome = True
+        self.body_origin = self.page_no()
 
 
 def save(pdf: FPDF, path: Path):
@@ -81,30 +104,54 @@ def save(pdf: FPDF, path: Path):
     print("wrote", path)
 
 
-def engineering_report() -> Handout:
-    pdf = Handout("BSE4104 Group M Evening | Final Engineering Report", body=12, leading=6.4)
+def _cover(pdf: Handout):
     pdf.add_page()
-    pdf.set_font("TNR", "B", 16)
-    pdf.multi_cell(0, 8, "University Student-Support Case Agent", new_x="LMARGIN", new_y="NEXT")
-    pdf.set_font("TNR", "B", 13)
-    pdf.multi_cell(0, 7, "Final Engineering Report", new_x="LMARGIN", new_y="NEXT")
-    pdf.ln(1)
-    pdf.set_font("TNR", "", 11)
-    pdf.multi_cell(
-        0,
-        5.4,
-        "BSE4104 AI Agentic Systems Capstone\n"
-        "Group M Evening, Makerere University\n"
-        "Namata Sumayya (23/U/22615), Nakaye Hildah (23/U/13598/PS),\n"
-        "Mushabe Moses (23/U/12131/EVE), Aryampa Joshua (23/U/06517/PS)\n"
-        "Course convener: Dr Kamulegeya Grace B\n"
-        "Final release: git tag v1.5.0 on branch week8-release\n"
-        "23 October 2026",
-        new_x="LMARGIN",
-        new_y="NEXT",
-    )
-    pdf.ln(2)
+    pdf.ln(28)
+    for line in (
+        "MAKERERE UNIVERSITY",
+        "COLLEGE OF COMPUTING AND INFORMATION SCIENCES",
+        "SCHOOL OF COMPUTING AND INFORMATICS TECHNOLOGY",
+        "DEPARTMENT OF NETWORKS",
+    ):
+        pdf.center_line(line, bold=True)
+    pdf.ln(8)
+    pdf.center_line("BSE4104 Emerging Trends in Software Engineering")
+    pdf.center_line("AI Agentic Systems Capstone")
+    pdf.ln(8)
+    pdf.center_line("University Student-Support Case Agent", bold=True)
+    pdf.center_line("Final Engineering Report", bold=True)
+    pdf.ln(8)
+    pdf.center_line("Group M Evening")
+    pdf.center_line("Namata Sumayya (23/U/22615)")
+    pdf.center_line("Nakaye Hildah (23/U/13598/PS)")
+    pdf.center_line("Mushabe Moses (23/U/12131/EVE)")
+    pdf.center_line("Aryampa Joshua (23/U/06517/PS)")
+    pdf.ln(6)
+    pdf.center_line("Course convener: Dr Kamulegeya Grace B")
+    pdf.center_line("23 October 2026")
 
+
+def _toc(pdf: Handout, entries: list[tuple[str, int]]):
+    pdf.add_page()
+    pdf.ln(8)
+    pdf.center_line("Table of Contents", bold=True)
+    pdf.ln(6)
+    usable = pdf.w - pdf.l_margin - pdf.r_margin
+    for title, page in entries:
+        pdf.set_font("TNR", "", 12)
+        pdf.set_text_color(0, 0, 0)
+        right = str(page)
+        left_w = pdf.get_string_width(title + " ")
+        right_w = pdf.get_string_width(right)
+        gap = max(usable - left_w - right_w, 4)
+        dot_w = pdf.get_string_width(".")
+        dots = "." * max(int(gap / dot_w), 2) if dot_w else ""
+        pdf.cell(left_w, pdf.leading, title + " ", align="L")
+        pdf.cell(gap, pdf.leading, dots, align="R")
+        pdf.cell(right_w, pdf.leading, right, align="R", new_x="LMARGIN", new_y="NEXT")
+
+
+def _engineering_body(pdf: Handout):
     pdf.h1("1. Executive Summary")
     pdf.p(
         "New Makerere University students need a reliable way to complete the first "
@@ -588,22 +635,37 @@ def engineering_report() -> Handout:
     return pdf
 
 
+def engineering_report() -> Handout:
+    draft = Handout("BSE4104 Group M Evening | Final Engineering Report", spacing=1.5)
+    _cover(draft)
+    _toc(draft, [])
+    draft.show_chrome = True
+    draft.add_page()
+    draft.begin_body()
+    _engineering_body(draft)
+    entries = list(draft.toc_entries)
+
+    pdf = Handout("BSE4104 Group M Evening | Final Engineering Report", spacing=1.5)
+    _cover(pdf)
+    _toc(pdf, entries)
+    pdf.show_chrome = True
+    pdf.add_page()
+    pdf.begin_body()
+    _engineering_body(pdf)
+    return pdf
+
+
 def evidence_pack() -> Handout:
     pdf = Handout("BSE4104 Group M Evening | Final Evidence Pack")
     pdf.add_page()
-    pdf.set_font("TNR", "B", 16)
-    pdf.multi_cell(0, 8, "Final Evaluation and Evidence Pack", new_x="LMARGIN", new_y="NEXT")
-    pdf.set_font("TNR", "", 11)
-    pdf.multi_cell(
-        0,
-        5.4,
-        "University Student-Support Case Agent\n"
-        "Group M Evening | BSE4104 | 23 October 2026\n"
-        "Release tag v1.5.0",
-        new_x="LMARGIN",
-        new_y="NEXT",
-    )
-    pdf.ln(2)
+    pdf.ln(6)
+    pdf.center_line("Final Evaluation and Evidence Pack", bold=True)
+    pdf.center_line("University Student-Support Case Agent")
+    pdf.center_line("Group M Evening")
+    pdf.center_line("BSE4104 Emerging Trends in Software Engineering")
+    pdf.center_line("23 October 2026")
+    pdf.ln(4)
+    pdf.begin_body()
     pdf.h1("1. How to read this pack")
     pdf.p(
         "This pack is the index for the evaluation evidence. The detailed numbers "
@@ -681,20 +743,14 @@ def evidence_pack() -> Handout:
 def progress_report() -> Handout:
     pdf = Handout("BSE4104 Group M Evening | Week 8 Progress Report")
     pdf.add_page()
-    pdf.set_font("TNR", "B", 16)
-    pdf.multi_cell(0, 7, "Week 8 Progress Report", new_x="LMARGIN", new_y="NEXT")
-    pdf.set_font("TNR", "", 11)
-    pdf.multi_cell(
-        0,
-        5.2,
-        "BSE4104 AI Agentic Systems\n"
-        "University Student-Support Case Agent\n"
-        "Group M Evening\n"
-        "Week ending 23 October 2026",
-        new_x="LMARGIN",
-        new_y="NEXT",
-    )
-    pdf.ln(1)
+    pdf.ln(4)
+    pdf.center_line("Week 8 Progress Report", bold=True)
+    pdf.center_line("BSE4104 Emerging Trends in Software Engineering")
+    pdf.center_line("University Student-Support Case Agent")
+    pdf.center_line("Group M Evening")
+    pdf.center_line("Week ending 23 October 2026")
+    pdf.ln(3)
+    pdf.begin_body()
     pdf.h1("Work completed")
     pdf.p(
         "Week 8 was hardening, the final release, and the demonstration pack. "
