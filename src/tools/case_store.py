@@ -27,8 +27,29 @@ FEE_DECISION_RE = re.compile(
 )
 
 
+_POLICY_QUESTION_RE = re.compile(
+    r"\b(what does|what do|which documents|code of conduct|according to|"
+    r"say about|says about|admission letter)\b",
+    re.IGNORECASE,
+)
+_PLACEHOLDER_RE = re.compile(
+    r"^(unspecified( onboarding issue)?|something is wrong|n/?a|none|test|placeholder|x)$",
+    re.IGNORECASE,
+)
+
+
 def blocked_topic(text: str) -> bool:
-    return bool(BLOCKED_TOPIC_RE.search(text or ""))
+    """Refuse admissions, grading, and discipline decisions.
+
+    A question that asks what a policy document says is not a decision,
+    so it is allowed through to retrieval.
+    """
+    message = text or ""
+    if not BLOCKED_TOPIC_RE.search(message):
+        return False
+    if _POLICY_QUESTION_RE.search(message):
+        return False
+    return True
 
 
 def fee_decision(text: str) -> bool:
@@ -78,7 +99,7 @@ def create_draft(arguments: dict, session_id: str) -> dict:
             "status": "error",
             "message": "Admissions, grading, and disciplinary matters are not filed as drafts.",
         }
-    if category == "fees_informational" and fee_decision(summary):
+    if fee_decision(summary):
         return {
             "status": "error",
             "message": "A fee draft may record a question. It must not record a fee decision.",
@@ -94,6 +115,11 @@ def create_draft(arguments: dict, session_id: str) -> dict:
         })
     if not summary:
         errors.append({"field": "issue_summary", "message": "issue_summary is required"})
+    elif len(summary) < 8 or _PLACEHOLDER_RE.match(summary):
+        errors.append({
+            "field": "issue_summary",
+            "message": "Describe the onboarding issue in a short sentence. A placeholder is not enough.",
+        })
     if category not in QUEUE_MAP:
         errors.append({
             "field": "category",

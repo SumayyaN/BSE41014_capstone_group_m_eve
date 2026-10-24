@@ -43,7 +43,7 @@ STOP_CONDITIONS = {
     "S1": "Grounded answer - retrieve_documents returned ok, reply cites a source.",
     "S2": "Case drafted - create_support_case returned created; human hand-off.",
     "S3": "Unsupported / offer draft - retrieve_documents returned no_match.",
-    "S4": "Out-of-scope refusal - student says they are continuing, returning, or postgraduate.",
+    "S4": "Out-of-scope refusal - student says they are not a freshman.",
     "S5": "Blocked topic refusal - admissions, grading, discipline, fee decision.",
     "S6": "Adversarial input refusal - instruction-override attempt, no tools run.",
     "S7": "Iteration limit - MAX_ROUNDS reached and no other stop applied.",
@@ -118,7 +118,9 @@ _NON_FRESHMAN_RE = re.compile(
     r"\b("
     r"not a freshman|not a first[- ]year|"
     r"post[- ]?graduate|"
-    r"continuing student|returning student"
+    r"continuing student|returning student|"
+    r"second[- ]year|third[- ]year|fourth[- ]year|fifth[- ]year|"
+    r"[2-5](?:st|nd|rd|th)?[- ]year"
     r")\b",
     re.IGNORECASE,
 )
@@ -576,7 +578,11 @@ def _model_failure(
         ),
         None,
     )
-    text = f"Error: {exc}"
+    raw = str(exc)
+    if any(token in raw for token in ("503", "429", "UNAVAILABLE", "RESOURCE_EXHAUSTED")):
+        text = "The assistant is temporarily busy. Please try again in a few minutes."
+    else:
+        text = "The assistant could not complete that request. Please try again."
     stop_condition = None
     if case_id:
         text += (

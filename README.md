@@ -8,6 +8,16 @@ Group M (Evening) | Makerere University
 
 A RAG-powered AI support agent that helps Makerere University freshmen with onboarding questions — webmail setup, campus Wi-Fi, ACMIS portal activation, and registration. It grounds every answer in real university documents and can save a support draft for staff follow-up.
 
+The reproducible final release is Git tag **`v1.5.0`**. Tag `v1.3.0` is the Week 7 evaluation snapshot. Tag `v1.4.0` is the README release before the Week 8 defect fixes. To run the final release:
+
+```
+git clone https://github.com/SumayyaN/BSE41014_capstone_group_m_eve.git
+cd BSE41014_capstone_group_m_eve
+git checkout v1.5.0
+```
+
+Then follow Prerequisites, RAG Pipeline Setup, and Running the App below.
+
 Four prompt versions are included for comparison:
 
 | Version | Description |
@@ -27,9 +37,12 @@ BSE41014_capstone_group_m_eve/
 │   ├── app.py                      # Streamlit UI
 │   ├── llm_client.py               # Gemini calls + RAG injection (v1.0–v1.2)
 │   ├── run_deterministic_checks.py # Week 7 scripted scenario checks
+│   ├── week8_retest.py             # Week 8 retest of the hardened failures
 │   ├── run_scenarios.py            # Week 7 live E2E scenario runner
 │   ├── agent/
 │   │   └── state.py                # Session state (Agent Task Contract §4)
+│   ├── observability/
+│   │   └── turn_log.py             # Week 7 turn log (model, retrieval, tools, latency)
 │   ├── rag/
 │   │   ├── download_sources.py     # Step 1: download corpus documents
 │   │   ├── extract_text.py         # Step 2: extract text from PDFs/HTML
@@ -53,10 +66,10 @@ BSE41014_capstone_group_m_eve/
 │   ├── Architecture/               # Architecture diagrams (SVG, PNG, PDF)
 │   ├── evaluation/                 # RAG eval, Week 7 scenarios, failure catalogue
 │   ├── requirements/               # Agent Task Contract, Prompt Spec, Tool Catalogue
-│   └── weekly-reports/             # Week 1–7 progress reports
+│   └── weekly-reports/             # Week 1–8 progress reports
 ├── evidence/
 │   ├── screenshots/                # Guardrails, ClickUp, GitHub evidence
-│   └── traces/                     # T1–T3 execution traces (Week 5)
+│   └── traces/                     # Week 5 T1–T3 and Week 7 O1–O4 samples
 ├── .env.example
 ├── requirements.txt
 └── README.md
@@ -169,7 +182,16 @@ Limits enforced in code (not by the model):
 | Week 3 | RAG retrieval (15 questions) | 11/15 pass (73%) |
 | Week 7 | Full agent (36 scenarios) | 29/36 pass (80.5%) |
 
-Known failures documented in `docs/evaluation/failure_catalogue_week7.md`.
+Known failures are documented in `docs/evaluation/failure_catalogue_week7.md`. Week 8 fixed five code defects. The scripted checks are `python week8_retest.py` and `python run_deterministic_checks.py` from `src/`. The deterministic suite is 16/16. On 24 October 2026 the 19 live chats in `docs/evaluation/week8_runner_input.xlsx` were run again. Eighteen finished. Results are in `docs/evaluation/week8_live_results.csv`. The Week 7 score of 29/36 is not rewritten. The committed results file has 35 rows.
+
+Still open on this release:
+
+- Some fee-policy questions score below the 0.70 retrieval cutoff (Week 7 scenario I02, and Week 3 Q5). The 24 October live run still returned `no_match` for I02. The cutoff was not retuned.
+- The Code of Conduct question (B06) is no longer blocked in code. In the live run the model still refused it and did not search.
+- M01, the memory question, did not finish. Gemini returned 429 after the free-tier quota was exhausted.
+- A live turn can take longer than 10 seconds. Week 7 recorded 13.6 seconds on a memory lookup and 12.5 seconds on case creation. The 24 October fees draft (C05) took 11.4 seconds.
+
+Week 7 turn logs are written to `logs/` and are not committed. Checked-in samples are `evidence/traces/O1_blocked_topic.json` through `O4_model_unavailable.json`. Regenerate them with `python src/traces/run_week7_observability.py`.
 
 ---
 
@@ -184,6 +206,12 @@ Known failures documented in `docs/evaluation/failure_catalogue_week7.md`.
 | Architecture Diagram | `docs/Architecture/Group_M_eve_Agent Architecture Diagram.svg` |
 | Week 7 Evaluation Report | `docs/evaluation/week7_evaluation.md` |
 | Failure Catalogue | `docs/evaluation/failure_catalogue_week7.md` |
+| Observability evidence | `docs/evaluation/Group_M_eve_Observability_Tracing_Evidence.pdf` |
+| Week 8 code retest | `docs/evaluation/week8_retest.json` |
+| Week 8 live retest | `docs/evaluation/week8_live_results.csv` |
+| Final engineering report | `docs/Group_M_eve_Final_Engineering_Report.pdf` |
+| Final evidence pack | `docs/evaluation/Group_M_eve_Final_Evidence_Pack.pdf` |
+| Week 8 progress report | `docs/weekly-reports/Week 8 Progress Report.pdf` |
 
 ---
 
