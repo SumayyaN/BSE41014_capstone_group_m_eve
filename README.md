@@ -8,12 +8,12 @@ Group M (Evening) | Makerere University
 
 A RAG-powered AI support agent that helps Makerere University freshmen with onboarding questions — webmail setup, campus Wi-Fi, ACMIS portal activation, and registration. It grounds every answer in real university documents and can save a support draft for staff follow-up.
 
-The reproducible final release is Git tag **`v1.5.0`**. Tag `v1.3.0` is the Week 7 evaluation snapshot. Tag `v1.4.0` is the README release before the Week 8 defect fixes. To run the final release:
+The reproducible final release is Git tag **`v1.6.0`**. Tag `v1.5.0` is the hardened app before the 24 October live retest and the later hand-in documents. Tag `v1.3.0` is the Week 7 evaluation snapshot. Tag `v1.4.0` is the README release before the Week 8 defect fixes. To run the final release:
 
 ```
 git clone https://github.com/SumayyaN/BSE41014_capstone_group_m_eve.git
 cd BSE41014_capstone_group_m_eve
-git checkout v1.5.0
+git checkout v1.6.0
 ```
 
 Then follow Prerequisites, RAG Pipeline Setup, and Running the App below.
